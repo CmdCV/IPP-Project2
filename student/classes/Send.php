@@ -2,11 +2,13 @@
 
 namespace IPP\Student\Classes;
 
-class Send extends Node {
-    public string $selector;
-    public Expr $expr;
+use DOMElement;
+
+class Send implements Node {
+    private string $selector;
+    private Expr $expr;
     /** @var Arg[] */
-    public array $arguments;
+    private array $arguments;
 
     public function __construct(string $selector, Expr $expr, array $arguments = []) {
         $this->selector = $selector;
@@ -29,5 +31,26 @@ class Send extends Node {
                 $arg->print($indentLevel + 2);
             }
         }
+    }
+
+    public static function fromXML(DOMElement $node): self {
+        $selector = $node->getAttribute('selector');
+        $receiver = null;
+        $args = [];
+
+        foreach ($node->childNodes as $child) {
+            if (!$child instanceof DOMElement) continue;
+
+            switch ($child->nodeName) {
+                case 'expr':
+                    $receiver = Expr::fromXML($child);
+                    break;
+                case 'arg':
+                    $args[] = Arg::fromXML($child);
+                    break;
+            }
+        }
+
+        return new self($selector, $receiver, $args);
     }
 }

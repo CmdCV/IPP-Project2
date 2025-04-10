@@ -2,9 +2,12 @@
 
 namespace IPP\Student\Classes;
 
-class Method extends Node {
-    public string $selector;
-    public Block $block;
+use DOMElement;
+use IPP\Student\Exceptions\FileStructureException;
+
+class Method implements Node {
+    private string $selector;
+    private Block $block;
 
     public function __construct(string $selector, Block $block) {
         $this->selector = $selector;
@@ -15,5 +18,16 @@ class Method extends Node {
         $indent = str_repeat('  ', $indentLevel);
         echo $indent . "Method: {$this->selector}\n";
         $this->block->print($indentLevel + 1);
+    }
+    public static function fromXML(DOMElement $node): self {
+        $selector = $node->getAttribute('selector');
+        $blockElement = $node->getElementsByTagName('block')->item(0);
+
+        if (!$blockElement instanceof DOMElement) {
+            throw new FileStructureException("Missing <block> in method");
+        }
+
+        $block = Block::fromXML($blockElement);
+        return new self($selector, $block);
     }
 }

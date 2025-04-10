@@ -2,10 +2,13 @@
 
 namespace IPP\Student\Classes;
 
-class Assign extends Node {
-    public int $order;
-    public VarNode $var;
-    public Expr $expr;
+use DOMElement;
+use IPP\Student\Exceptions\FileStructureException;
+
+class Assign implements Node {
+    private int $order;
+    private VarNode $var;
+    private Expr $expr;
 
     public function __construct(int $order, VarNode $var, Expr $expr) {
         $this->order = $order;
@@ -20,5 +23,29 @@ class Assign extends Node {
         $this->var->print($indentLevel + 2);
         echo $indent . "  Expression:\n";
         $this->expr->print($indentLevel + 2);
+    }
+    public static function fromXML(DOMElement $node): self {
+        $order = (int)$node->getAttribute('order');
+        $varNode = null;
+        $exprNode = null;
+
+        foreach ($node->childNodes as $child) {
+            if (!$child instanceof DOMElement) continue;
+
+            switch ($child->nodeName) {
+                case 'var':
+                    $varNode = new VarNode($child->getAttribute('name'));
+                    break;
+                case 'expr':
+                    $exprNode = Expr::fromXML($child);
+                    break;
+            }
+        }
+
+        if ($varNode === null || $exprNode === null) {
+            throw new FileStructureException("Incomplete <assign>: missing <var> or <expr>");
+        }
+
+        return new self($order, $varNode, $exprNode);
     }
 }

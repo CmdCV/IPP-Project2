@@ -2,9 +2,11 @@
 
 namespace IPP\Student\Classes;
 
-class Arg extends Node {
-    public int $order;
-    public Expr $expr;
+use DOMElement;
+
+class Arg implements Node {
+    private int $order;
+    private Expr $expr;
 
     public function __construct(int $order, Expr $expr) {
         $this->order = $order;
@@ -16,5 +18,19 @@ class Arg extends Node {
         echo $indent . "Argument (order: {$this->order}):\n";
         echo $indent . "  Expression:\n";
         $this->expr->print($indentLevel + 2);
+    }
+
+    public static function fromXML(DOMElement $node): self {
+        $order = (int)$node->getAttribute('order');
+        $expr = null;
+
+        foreach ($node->childNodes as $child) {
+            if ($child instanceof DOMElement && $child->nodeName === 'expr') {
+                $expr = Expr::fromXML($child);
+                break;
+            }
+        }
+
+        return new self($order, $expr);
     }
 }

@@ -2,9 +2,11 @@
 
 namespace IPP\Student\Classes;
 
-class Parameter extends Node {
-    public int $order;
-    public string $name;
+use DOMElement;
+
+class Parameter implements Node {
+    private int $order;
+    private string $name;
 
     public function __construct(int $order, string $name) {
         $this->order = $order;
@@ -14,5 +16,12 @@ class Parameter extends Node {
     public function print($indentLevel = 0): void {
         $indent = str_repeat('  ', $indentLevel);
         echo $indent . "Parameter: order {$this->order} name {$this->name}\n";
+    }
+
+    public static function fromXML(DOMElement $node): self {
+        return new self(
+            (int)$node->getAttribute('order'),
+            $node->getAttribute('name')
+        );
     }
 }

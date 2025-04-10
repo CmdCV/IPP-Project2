@@ -2,11 +2,7 @@
 
 namespace IPP\Student\Classes;
 
-class Node {
-
-    public function print(int $indentLevel = 0): void {
-        $indent = str_repeat('  ', $indentLevel);
-        echo $indent;
-    }
+interface Node extends Parsable {
+    public function print(int $indentLevel = 0): void;
 }
 ?>

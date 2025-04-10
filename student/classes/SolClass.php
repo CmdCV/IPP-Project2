@@ -2,12 +2,13 @@
 
 namespace IPP\Student\Classes;
 
-// Protože "class" je rezervované slovo, používáme název SolClass
-class SolClass extends Node {
-    public string $name;
-    public string $parent;
+use DOMElement;
+
+class SolClass implements Node {
+    private string $name;
+    private string $parent;
     /** @var Method[] */
-    public array $methods;
+    private array $methods;
 
     public function __construct(string $name, string $parent, array $methods = []) {
         $this->name = $name;
@@ -26,5 +27,18 @@ class SolClass extends Node {
         foreach ($this->methods as $method) {
             $method->print($indentLevel + 2);
         }
+    }
+    public static function fromXML(DOMElement $node): self {
+        $name = $node->getAttribute('name');
+        $parent = $node->getAttribute('parent');
+        $solClass = new self($name, $parent);
+
+        foreach ($node->getElementsByTagName('method') as $methodNode) {
+            if ($methodNode instanceof DOMElement) {
+                $solClass->addMethod(Method::fromXML($methodNode));
+            }
+        }
+
+        return $solClass;
     }
 }
