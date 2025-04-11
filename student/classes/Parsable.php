@@ -4,6 +4,7 @@ namespace IPP\Student\classes;
 
 use DOMElement;
 
-interface Parsable {
+interface Parsable
+{
     public static function fromXML(DOMElement $node): self;
 }

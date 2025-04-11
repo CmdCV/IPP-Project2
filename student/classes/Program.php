@@ -4,12 +4,39 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 
-class Program implements Node
+class Program extends Node
 {
     private string $language;
     private string $description;
     /** @var SolClass[] */
     private array $classes;
+
+    public function __construct(string $language, string $description, array $classes = [])
+    {
+        $this->language = $language;
+        $this->description = $description;
+        $this->classes = $classes;
+    }
+
+    public static function fromXML(DOMElement $node): self
+    {
+        $language = $node->getAttribute('language');
+        $description = $node->getAttribute('description');
+        $program = new self($language, $description);
+
+        foreach ($node->getElementsByTagName('class') as $classNode) {
+            if ($classNode instanceof DOMElement) {
+                $program->addClass(SolClass::fromXML($classNode));
+            }
+        }
+
+        return $program;
+    }
+
+    public function addClass(SolClass $class)
+    {
+        $this->classes[] = $class;
+    }
 
     public function getLanguage(): string
     {
@@ -26,50 +53,13 @@ class Program implements Node
         return $this->classes;
     }
 
-    public function __construct(string $language, string $description, array $classes = [])
+    public function findClassByName(string $name): SolClass
     {
-        $this->language = $language;
-        $this->description = $description;
-        $this->classes = $classes;
-    }
-
-    public function addClass(SolClass $class)
-    {
-        $this->classes[] = $class;
-    }
-
-    public function findClassByName(string $name): SolClass {
         foreach ($this->classes as $class) {
             if ($class->getName() === $name) {
                 return $class;
             }
         }
         throw new MessageException("Class '{$name}' not found when searching in Program.");
-    }
-
-    public function print($indentLevel = 0): void
-    {
-        $indent = str_repeat('  ', $indentLevel);
-        echo $indent . "Program:\n";
-        echo $indent . "  Language: {$this->language}\n";
-        echo $indent . "  Description: {$this->description}\n";
-        echo $indent . "  Classes:\n";
-        foreach ($this->classes as $class) {
-            $class->print($indentLevel + 2);
-        }
-    }
-
-    public static function fromXML(DOMElement $node): self {
-        $language = $node->getAttribute('language');
-        $description = $node->getAttribute('description');
-        $program = new self($language, $description);
-
-        foreach ($node->getElementsByTagName('class') as $classNode) {
-            if ($classNode instanceof DOMElement) {
-                $program->addClass(SolClass::fromXML($classNode));
-            }
-        }
-
-        return $program;
     }
 }

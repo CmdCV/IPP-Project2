@@ -3,11 +3,8 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
-use IPP\Student\Runtime\Frame;
-use IPP\Student\Runtime\FrameStack;
-use IPP\Student\Runtime\Value;
 
-class Block implements Node
+class Block extends Node
 {
     private int $arity;
     /** @var Assign[] */
@@ -17,26 +14,6 @@ class Block implements Node
     /** @var Expr[] */
     private array $expressions;
 
-    public function getArity(): int
-    {
-        return $this->arity;
-    }
-
-    public function getAssignments(): array
-    {
-        return $this->assignments;
-    }
-
-    public function getExpressions(): array
-    {
-        return $this->expressions;
-    }
-
-    public function getParameters(): array
-    {
-        return $this->parameters;
-    }
-
     public function __construct(int $arity, array $assignments = [], array $parameters = [], array $expressions = [])
     {
         $this->arity = $arity;
@@ -45,35 +22,8 @@ class Block implements Node
         $this->expressions = $expressions;
     }
 
-    public function addAssignment(Assign $assignment): void
+    public static function fromXML(DOMElement $node): self
     {
-        $this->assignments[] = $assignment;
-    }
-
-    public function addParameter(Parameter $parameter): void
-    {
-        $this->parameters[] = $parameter;
-    }
-
-    public function print($indentLevel = 0): void
-    {
-        $indent = str_repeat('  ', $indentLevel);
-        echo $indent . "Block (arity: {$this->arity})\n";
-        if (!empty($this->parameters)) {
-            echo $indent . "  Parameters:\n";
-            foreach ($this->parameters as $param) {
-                $param->print($indentLevel + 2);
-            }
-        }
-        if (!empty($this->assignments)) {
-            echo $indent . "  Assignments:\n";
-            foreach ($this->assignments as $assign) {
-                $assign->print($indentLevel + 2);
-            }
-        }
-    }
-
-    public static function fromXML(DOMElement $node): self {
         $arity = (int)$node->getAttribute('arity');
         $block = new self($arity);
 
@@ -93,17 +43,33 @@ class Block implements Node
         return $block;
     }
 
-    public function execute(FrameStack $stack): ?Value
+    public function addParameter(Parameter $parameter): void
     {
-        $frame = new Frame();
-        $stack->push($frame);
+        $this->parameters[] = $parameter;
+    }
 
-        $lastValue = null;
-        foreach ($this->assignments as $assign) {
-            $lastValue = $assign->execute($stack); // update: Assign bude vracet Value
-        }
+    public function addAssignment(Assign $assignment): void
+    {
+        $this->assignments[] = $assignment;
+    }
 
-        $stack->pop();
-        return $lastValue;
+    public function getArity(): int
+    {
+        return $this->arity;
+    }
+
+    public function getAssignments(): array
+    {
+        return $this->assignments;
+    }
+
+    public function getParameters(): array
+    {
+        return $this->parameters;
+    }
+
+    public function getExpressions(): array
+    {
+        return $this->expressions;
     }
 }

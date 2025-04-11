@@ -4,24 +4,28 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 
-class VarNode implements Node {
+class VarNode extends Node
+{
     private string $name;
+
+    public function __construct(string $name)
+    {
+        $this->name = $name;
+    }
+
+    public static function fromXML(DOMElement $node): self
+    {
+        return new self($node->getAttribute('name'));
+    }
 
     public function getName(): string
     {
         return $this->name;
     }
 
-    public function __construct(string $name) {
-        $this->name = $name;
-    }
-
-    public function print(int $indentLevel = 0): void {
-        $indent = str_repeat('  ', $indentLevel);
-        echo $indent . "Variable: {$this->name}\n";
-    }
-
-    public static function fromXML(DOMElement $node): self {
-        return new self($node->getAttribute('name'));
+    public function prettyPrint(int $indent = 0): string
+    {
+        $pad = str_repeat('  ', $indent);
+        return "{$pad}Var(name={$this->name})\n";
     }
 }

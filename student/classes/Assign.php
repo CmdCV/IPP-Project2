@@ -4,43 +4,22 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
-use IPP\Student\Runtime\Frame;
-use IPP\Student\Runtime\FrameStack;
-use IPP\Student\Runtime\Value;
 
-class Assign implements Node {
+class Assign extends Node
+{
     private int $order;
     private VarNode $var;
     private Expr $expr;
 
-    public function getOrder(): int
+    public function __construct(int $order, VarNode $var, Expr $expr)
     {
-        return $this->order;
-    }
-    public function getVar(): VarNode
-    {
-        return $this->var;
-    }
-    public function getExpr(): Expr
-    {
-        return $this->expr;
-    }
-
-    public function __construct(int $order, VarNode $var, Expr $expr) {
         $this->order = $order;
         $this->var = $var;
         $this->expr = $expr;
     }
 
-    public function print($indentLevel = 0): void {
-        $indent = str_repeat('  ', $indentLevel);
-        echo $indent . "Assignment: order {$this->order}\n";
-        echo $indent . "  Variable:\n";
-        $this->var->print($indentLevel + 2);
-        echo $indent . "  Expression:\n";
-        $this->expr->print($indentLevel + 2);
-    }
-    public static function fromXML(DOMElement $node): self {
+    public static function fromXML(DOMElement $node): self
+    {
         $order = (int)$node->getAttribute('order');
         $varNode = null;
         $exprNode = null;
@@ -65,10 +44,18 @@ class Assign implements Node {
         return new self($order, $varNode, $exprNode);
     }
 
-    public function execute(FrameStack $stack): Value
+    public function getOrder(): int
     {
-        $value = $this->expr->evaluate($stack);
-        $stack->set($this->var->getName(), $value);
-        return $value;
+        return $this->order;
+    }
+
+    public function getVar(): VarNode
+    {
+        return $this->var;
+    }
+
+    public function getExpr(): Expr
+    {
+        return $this->expr;
     }
 }

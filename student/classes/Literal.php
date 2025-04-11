@@ -4,9 +4,24 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 
-class Literal implements Node {
+class Literal extends Node
+{
     private string $classType;
     private $value;
+
+    public function __construct(string $classType, $value)
+    {
+        $this->classType = $classType;
+        $this->value = $value;
+    }
+
+    public static function fromXML(DOMElement $node): self
+    {
+        return new self(
+            $node->getAttribute('class'),
+            $node->getAttribute('value')
+        );
+    }
 
     public function getClassType(): string
     {
@@ -17,20 +32,10 @@ class Literal implements Node {
     {
         return $this->value;
     }
-    public function __construct(string $classType, $value) {
-        $this->classType = $classType;
-        $this->value = $value;
-    }
 
-    public function print(int $indentLevel = 0): void {
-        $indent = str_repeat('  ', $indentLevel);
-        echo $indent . "Literal (class: {$this->classType}, value: {$this->value})\n";
-    }
-
-    public static function fromXML(DOMElement $node): self {
-        return new self(
-            $node->getAttribute('class'),
-            $node->getAttribute('value')
-        );
+    public function prettyPrint(int $indent = 0): string
+    {
+        $pad = str_repeat('  ', $indent);
+        return "{$pad}Literal(classType={$this->classType}, value={$this->value})\n";
     }
 }
