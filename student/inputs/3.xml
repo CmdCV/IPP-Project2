@@ -1,41 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <program language="SOL25">
-    <class name="Main" parent="Object">
+    <class name="A" parent="Object" />
+    <class name="Main" parent="A">
         <method selector="run">
-            <block arity="0">
-                <assign order="1">
-                    <var name="x" />
-                    <expr>
-                        <send selector="plus:">
-                            <expr>
-                                <send selector="from:">
-                                    <expr>
-                                        <literal class="class" value="Integer" />
-                                    </expr>
-                                    <arg order="1">
-                                        <expr>
-                                            <send selector="new">
-                                                <expr>
-                                                    <literal class="class" value="Integer" />
-                                                </expr>
-                                            </send>
-                                        </expr>
-                                    </arg>
-                                </send>
-                            </expr>
-                            <arg order="1">
-                                <expr>
-                                    <send selector="new">
-                                        <expr>
-                                            <literal class="class" value="Integer" />
-                                        </expr>
-                                    </send>
-                                </expr>
-                            </arg>
-                        </send>
-                    </expr>
-                </assign>
-            </block>
+            <block arity="0" />
         </method>
     </class>
 </program>

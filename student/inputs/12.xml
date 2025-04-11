@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<program language="SOL25">
+    <class name="Main" parent="Object">
+        <method selector="run">
+            <block arity="0" />
+        </method>
+        <method selector="self:from:nil:">
+            <block arity="3">
+                <parameter order="1" name="x" />
+                <parameter order="2" name="y" />
+                <parameter order="3" name="z" />
+            </block>
+        </method>
+    </class>
+</program>

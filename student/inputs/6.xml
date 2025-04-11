@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<program language="SOL25">
-    <class name="A" parent="Object" />
-    <class name="B" parent="A" />
-    <class name="Main" parent="B">
+<program language="SOL25" description="comment&#10;newline">
+    <class name="Main" parent="Object">
         <method selector="run">
             <block arity="0" />
         </method>
