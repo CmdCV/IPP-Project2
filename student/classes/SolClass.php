@@ -88,7 +88,6 @@ class SolClass extends Node
     {
         $instance = new ObjectInstance($this);
 
-        // Výchozí hodnota pro Integer
         if ($this->name === 'Integer') {
             $instance->setAttribute('__value', 0);
         }
@@ -115,5 +114,17 @@ class SolClass extends Node
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
         throw new LogicException("Class definition cannot be executed as a runtime node.");
+    }
+
+    public function isSubclassOf(string $ancestor): bool
+    {
+        $current = $this;
+        while ($current !== null) {
+            if ($current->getName() === $ancestor) {
+                return true;
+            }
+            $current = $current->getParent();
+        }
+        return false;
     }
 }
