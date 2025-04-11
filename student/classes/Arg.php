@@ -3,6 +3,8 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
 
 class Arg extends Node
 {
@@ -37,5 +39,10 @@ class Arg extends Node
     public function getExpr(): Expr
     {
         return $this->expr;
+    }
+
+    public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
+    {
+        return $this->expr->execute($self, $frame);
     }
 }

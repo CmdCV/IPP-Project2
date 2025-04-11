@@ -3,6 +3,9 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
+use LogicException;
 
 class Parameter extends Node
 {
@@ -37,5 +40,10 @@ class Parameter extends Node
     {
         $indent = str_repeat('  ', $indentLevel);
         echo $indent . "Parameter: order {$this->order} name {$this->name}\n";
+    }
+
+    public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
+    {
+        throw new LogicException("Parameter node should never be executed directly.");
     }
 }

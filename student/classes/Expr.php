@@ -4,10 +4,10 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
-use IPP\Student\Runtime\Frame;
-use IPP\Student\Runtime\FrameStack;
-use IPP\Student\Runtime\ObjectInstance;
-use IPP\Student\Runtime\Value;
+use IPP\Student\RunTime\BlockInstance;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
+use LogicException;
 
 class Expr extends Node
 {
@@ -15,6 +15,26 @@ class Expr extends Node
     private ?Send $send;
     private ?Block $block;
     private ?VarNode $var;
+
+    public function getLiteral(): ?Literal
+    {
+        return $this->literal;
+    }
+
+    public function getSend(): ?Send
+    {
+        return $this->send;
+    }
+
+    public function getBlock(): ?Block
+    {
+        return $this->block;
+    }
+
+    public function getVar(): ?VarNode
+    {
+        return $this->var;
+    }
 
     public function __construct(?Literal $literal = null, ?Send $send = null, ?Block $block = null, ?VarNode $var = null)
     {
@@ -55,23 +75,21 @@ class Expr extends Node
         return new self($literal, $send, $block, $var);
     }
 
-    public function getLiteral(): ?Literal
+    public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
-        return $this->literal;
-    }
+        if ($this->literal !== null) {
+            return $this->literal->execute($self, $frame);
+        }
+        if ($this->send !== null) {
+            return $this->send->execute($self, $frame);
+        }
+        if ($this->block !== null) {
+            return new BlockInstance($this->block, $self);
+        }
+        if ($this->var !== null) {
+            return $this->var->execute($self, $frame);
+        }
 
-    public function getSend(): ?Send
-    {
-        return $this->send;
-    }
-
-    public function getBlock(): ?Block
-    {
-        return $this->block;
-    }
-
-    public function getVar(): ?VarNode
-    {
-        return $this->var;
+        throw new LogicException("Invalid expression: none of the expression types is set.");
     }
 }

@@ -3,6 +3,9 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\RunTime\ObjectFactory;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
 
 class Block extends Node
 {
@@ -13,6 +16,36 @@ class Block extends Node
     private array $parameters;
     /** @var Expr[] */
     private array $expressions;
+
+    public function addParameter(Parameter $parameter): void
+    {
+        $this->parameters[] = $parameter;
+    }
+
+    public function addAssignment(Assign $assignment): void
+    {
+        $this->assignments[] = $assignment;
+    }
+
+    public function getArity(): int
+    {
+        return $this->arity;
+    }
+
+    public function getAssignments(): array
+    {
+        return $this->assignments;
+    }
+
+    public function getParameters(): array
+    {
+        return $this->parameters;
+    }
+
+    public function getExpressions(): array
+    {
+        return $this->expressions;
+    }
 
     public function __construct(int $arity, array $assignments = [], array $parameters = [], array $expressions = [])
     {
@@ -43,33 +76,12 @@ class Block extends Node
         return $block;
     }
 
-    public function addParameter(Parameter $parameter): void
+    public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
-        $this->parameters[] = $parameter;
-    }
-
-    public function addAssignment(Assign $assignment): void
-    {
-        $this->assignments[] = $assignment;
-    }
-
-    public function getArity(): int
-    {
-        return $this->arity;
-    }
-
-    public function getAssignments(): array
-    {
-        return $this->assignments;
-    }
-
-    public function getParameters(): array
-    {
-        return $this->parameters;
-    }
-
-    public function getExpressions(): array
-    {
-        return $this->expressions;
+        $result = ObjectFactory::nil();
+        foreach ($this->assignments as $assign) {
+            $result = $assign->execute($self, $frame);
+        }
+        return $result;
     }
 }

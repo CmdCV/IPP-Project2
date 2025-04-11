@@ -1,16 +1,19 @@
 <?php
 
 namespace IPP\Student\Classes;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
 
 abstract class Node implements Parsable
 {
-
-//    public abstract function execute(Node $node);
 
     public function debug_log(string $message, int $indent = 0): void
     {
         $pad = str_repeat('  ', $indent);
         fwrite(STDERR, "[DEBUG] {$pad}{$message}\n");
+    }
+    function debug_log_object_id(ObjectInstance $obj): void {
+        debug_log("Instance ID: " . spl_object_id($obj));
     }
 
     public function __toString(): string
@@ -51,6 +54,6 @@ abstract class Node implements Parsable
         $out .= "{$pad}}\n";
         return $out;
     }
-}
 
-?>
+    public abstract function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance;
+}

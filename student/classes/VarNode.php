@@ -3,6 +3,9 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\RunTime\ObjectFactory;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
 
 class VarNode extends Node
 {
@@ -27,5 +30,17 @@ class VarNode extends Node
     {
         $pad = str_repeat('  ', $indent);
         return "{$pad}Var(name={$this->name})\n";
+    }
+
+    public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
+    {
+        return match ($this->name) {
+            'self' => $self,
+            'super' => new SuperReference($self),
+            'nil' => ObjectFactory::nil(),
+            'true' => ObjectFactory::true(),
+            'false' => ObjectFactory::false(),
+            default => $frame->get($this->name),
+        };
     }
 }

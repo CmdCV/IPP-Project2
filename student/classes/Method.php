@@ -4,11 +4,25 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
+use IPP\Student\Exceptions\MessageException;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
+use LogicException;
 
 class Method extends Node
 {
     private string $selector;
     private Block $block;
+
+    public function getSelector(): string
+    {
+        return $this->selector;
+    }
+
+    public function getBlock(): Block
+    {
+        return $this->block;
+    }
 
     public function __construct(string $selector, Block $block)
     {
@@ -29,13 +43,25 @@ class Method extends Node
         return new self($selector, $block);
     }
 
-    public function getSelector(): string
+    public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
-        return $this->selector;
+        throw new LogicException("Cannot execute a method directly.");
     }
 
-    public function getBlock(): Block
+    public function invoke(ObjectInstance $self, array $args): ObjectInstance
     {
-        return $this->block;
+        $parameters = $this->block->getParameters();
+
+        if (count($args) !== count($parameters)) {
+            throw new MessageException("Wrong arity in method '{$this->selector}'");
+        }
+
+        $frame = new ObjectFrame();
+
+        foreach ($parameters as $i => $param) {
+            $frame->set($param->getName(), $args[$i]);
+        }
+
+        return $this->block->execute($self, $frame);
     }
 }

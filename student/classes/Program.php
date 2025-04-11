@@ -3,6 +3,11 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\Exceptions\MessageException;
+use IPP\Student\RunTime\ObjectFactory;
+use IPP\Student\RunTime\ObjectFrame;
+use IPP\Student\RunTime\ObjectInstance;
+use LogicException;
 
 class Program extends Node
 {
@@ -10,7 +15,25 @@ class Program extends Node
     private string $description;
     /** @var SolClass[] */
     private array $classes;
+    public function addClass(SolClass $class)
+    {
+        $this->classes[] = $class;
+    }
 
+    public function getLanguage(): string
+    {
+        return $this->language;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getClasses(): array
+    {
+        return $this->classes;
+    }
     public function __construct(string $language, string $description, array $classes = [])
     {
         $this->language = $language;
@@ -33,25 +56,7 @@ class Program extends Node
         return $program;
     }
 
-    public function addClass(SolClass $class)
-    {
-        $this->classes[] = $class;
-    }
 
-    public function getLanguage(): string
-    {
-        return $this->language;
-    }
-
-    public function getDescription(): string
-    {
-        return $this->description;
-    }
-
-    public function getClasses(): array
-    {
-        return $this->classes;
-    }
 
     public function findClassByName(string $name): SolClass
     {
@@ -61,5 +66,43 @@ class Program extends Node
             }
         }
         throw new MessageException("Class '{$name}' not found when searching in Program.");
+    }
+
+    public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
+    {
+        throw new LogicException("Program node cannot be directly executed, use start() instead.");
+    }
+
+    public function start(): void
+    {
+        $this->registerBuiltins();
+
+        $this->linkInheritance();
+
+        foreach ($this->classes as $class) {
+            ObjectFactory::registerClass($class);
+        }
+
+        $mainClass = $this->findClassByName("Main");
+        $mainClass->instantiate()->sendMessage("run", []);
+    }
+    private function registerBuiltins(): void
+    {
+        $this->addClass(new SolClass('Object', ''));
+        $names = ['Integer', 'String', 'True', 'False', 'Nil', 'Block'];
+        foreach ($names as $name) {
+            $this->addClass(new SolClass($name, 'Object'));
+        }
+    }
+    public function linkInheritance(): void
+    {
+        $classMap = [];
+        foreach ($this->classes as $class) {
+            $classMap[$class->getName()] = $class;
+        }
+
+        foreach ($this->classes as $class) {
+            $class->linkParent($classMap);
+        }
     }
 }
