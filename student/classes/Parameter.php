@@ -8,6 +8,16 @@ class Parameter implements Node {
     private int $order;
     private string $name;
 
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
     public function __construct(int $order, string $name) {
         $this->order = $order;
         $this->name = $name;

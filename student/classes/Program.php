@@ -11,6 +11,21 @@ class Program implements Node
     /** @var SolClass[] */
     private array $classes;
 
+    public function getLanguage(): string
+    {
+        return $this->language;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getClasses(): array
+    {
+        return $this->classes;
+    }
+
     public function __construct(string $language, string $description, array $classes = [])
     {
         $this->language = $language;
@@ -21,6 +36,15 @@ class Program implements Node
     public function addClass(SolClass $class)
     {
         $this->classes[] = $class;
+    }
+
+    public function findClassByName(string $name): SolClass {
+        foreach ($this->classes as $class) {
+            if ($class->getName() === $name) {
+                return $class;
+            }
+        }
+        throw new MessageException("Class '{$name}' not found when searching in Program.");
     }
 
     public function print($indentLevel = 0): void

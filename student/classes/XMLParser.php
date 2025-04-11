@@ -3,6 +3,7 @@
 namespace IPP\Student\Classes;
 
 use DOMDocument;
+use DOMElement;
 
 class XMLParser {
     private DOMDocument $source;

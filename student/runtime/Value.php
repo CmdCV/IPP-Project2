@@ -3,10 +3,16 @@
 namespace IPP\Student\Runtime;
 
 class Value {
-    public function __construct(
-        public readonly string $type,
-        public readonly mixed $value
-    ) {}
+    private string $type;
+    private mixed $value;
+    public function __construct(string $type, $value)
+    {
+        $this->type = $type;
+        $this->value = $value;
+
+        echo "[Value] Constructing Value of type {$this->type}\n";
+    }
+
 
     public function getValue(): mixed
     {

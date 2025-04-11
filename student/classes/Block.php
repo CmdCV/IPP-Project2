@@ -3,6 +3,9 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\Runtime\Frame;
+use IPP\Student\Runtime\FrameStack;
+use IPP\Student\Runtime\Value;
 
 class Block implements Node
 {
@@ -13,6 +16,26 @@ class Block implements Node
     private array $parameters;
     /** @var Expr[] */
     private array $expressions;
+
+    public function getArity(): int
+    {
+        return $this->arity;
+    }
+
+    public function getAssignments(): array
+    {
+        return $this->assignments;
+    }
+
+    public function getExpressions(): array
+    {
+        return $this->expressions;
+    }
+
+    public function getParameters(): array
+    {
+        return $this->parameters;
+    }
 
     public function __construct(int $arity, array $assignments = [], array $parameters = [], array $expressions = [])
     {
@@ -50,8 +73,7 @@ class Block implements Node
         }
     }
 
-    public static function fromXML(DOMElement $node): self
-    {
+    public static function fromXML(DOMElement $node): self {
         $arity = (int)$node->getAttribute('arity');
         $block = new self($arity);
 
@@ -69,5 +91,19 @@ class Block implements Node
         }
 
         return $block;
+    }
+
+    public function execute(FrameStack $stack): ?Value
+    {
+        $frame = new Frame();
+        $stack->push($frame);
+
+        $lastValue = null;
+        foreach ($this->assignments as $assign) {
+            $lastValue = $assign->execute($stack); // update: Assign bude vracet Value
+        }
+
+        $stack->pop();
+        return $lastValue;
     }
 }

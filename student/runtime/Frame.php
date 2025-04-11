@@ -11,7 +11,7 @@ class Frame {
 
     public function get(string $name): mixed {
         if (!array_key_exists($name, $this->variables)) {
-            throw new \RuntimeException("Undefined variable '$name'");
+            throw new MessageException("Undefined variable '{$name}'");
         }
         return $this->variables[$name];
     }

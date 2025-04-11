@@ -8,6 +8,14 @@ class Arg implements Node {
     private int $order;
     private Expr $expr;
 
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+    public function getExpr(): Expr
+    {
+        return $this->expr;
+    }
     public function __construct(int $order, Expr $expr) {
         $this->order = $order;
         $this->expr = $expr;

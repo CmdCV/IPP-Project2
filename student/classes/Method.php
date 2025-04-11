@@ -9,6 +9,14 @@ class Method implements Node {
     private string $selector;
     private Block $block;
 
+    public function getSelector(): string
+    {
+        return $this->selector;
+    }
+    public function getBlock(): Block
+    {
+        return $this->block;
+    }
     public function __construct(string $selector, Block $block) {
         $this->selector = $selector;
         $this->block = $block;
@@ -24,7 +32,7 @@ class Method implements Node {
         $blockElement = $node->getElementsByTagName('block')->item(0);
 
         if (!$blockElement instanceof DOMElement) {
-            throw new FileStructureException("Missing <block> in method");
+            throw new FileStructureException("Missing <block> element in method '{$this->selector}'");
         }
 
         $block = Block::fromXML($blockElement);

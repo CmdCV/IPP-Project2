@@ -15,10 +15,14 @@ class ObjectInstance {
     public function getClass(): SolClass {
         return $this->class;
     }
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
 
     public function getAttribute(string $name): Value {
         if (!array_key_exists($name, $this->attributes)) {
-            throw new MessageException("Undefined attribute '$name'");
+            throw new MessageException("Undefined attribute '{$name}' in object of class '{$this->class->getName()}'");
         }
         return $this->attributes[$name];
     }

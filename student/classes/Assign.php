@@ -4,11 +4,27 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
+use IPP\Student\Runtime\Frame;
+use IPP\Student\Runtime\FrameStack;
+use IPP\Student\Runtime\Value;
 
 class Assign implements Node {
     private int $order;
     private VarNode $var;
     private Expr $expr;
+
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+    public function getVar(): VarNode
+    {
+        return $this->var;
+    }
+    public function getExpr(): Expr
+    {
+        return $this->expr;
+    }
 
     public function __construct(int $order, VarNode $var, Expr $expr) {
         $this->order = $order;
@@ -47,5 +63,12 @@ class Assign implements Node {
         }
 
         return new self($order, $varNode, $exprNode);
+    }
+
+    public function execute(FrameStack $stack): Value
+    {
+        $value = $this->expr->evaluate($stack);
+        $stack->set($this->var->getName(), $value);
+        return $value;
     }
 }

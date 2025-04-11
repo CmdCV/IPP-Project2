@@ -2,9 +2,13 @@
 
 namespace IPP\Student;
 
-use IPP\Core\AbstractInterpreter;
 use IPP\Core\ReturnCode;
+use IPP\Core\AbstractInterpreter;
 use IPP\Student\Classes\XMLParser;
+use IPP\Student\Runtime\Value;
+use IPP\Student\Runtime\Frame;
+use IPP\Student\Runtime\FrameStack;
+use IPP\Student\Runtime\ObjectInstance;
 
 class Interpreter extends AbstractInterpreter
 {
@@ -14,9 +18,20 @@ class Interpreter extends AbstractInterpreter
 
         $parser = new XMLParser($dom);
         $program = $parser->parseProgram();
-        $program->print();
+//        $program->print();
+        $mainClass = $program->findClassByName("Main");
+        $runMethod = $mainClass->findMethodBySelector("run");
 
-        // TODO: Start your code here
+        $stack = new FrameStack();
+        $frame = new Frame();
+
+        $mainInstance = new ObjectInstance($mainClass);
+        $frame->set("self", new Value("Object", $mainInstance));
+
+        $stack->push($frame);
+
+        $runMethod->getBlock()->execute($stack);
+
         // Check IPP\Core\AbstractInterpreter for predefined I/O objects:
         // $dom = $this->source->getDOMDocument();
         // $val = $this->input->readString();
