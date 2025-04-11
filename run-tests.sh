@@ -5,7 +5,12 @@ RED='\033[0;31m'
 RESET='\033[0m'
 
 for i in {1..38}; do
-    OUTPUT=$(php interpret.php --source="./student/inputs/$i.xml" 2>&1)
+    if [ "$i" -eq 14 ]; then
+        OUTPUT=$(echo "ahoj" | php interpret.php --source="./student/inputs/$i.xml" 2>&1)
+    else
+        OUTPUT=$(php interpret.php --source="./student/inputs/$i.xml" 2>&1)
+    fi
+
     if [ $? -eq 0 ]; then
         echo -e "${i} ${GREEN}SUCCESS${RESET}"
     else
