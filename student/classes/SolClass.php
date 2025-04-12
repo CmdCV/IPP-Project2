@@ -100,7 +100,8 @@ class SolClass extends Node
 
     public function instantiateFrom(ObjectInstance $source): ObjectInstance
     {
-        if (!$source->isInstanceOf($this)) {
+        // TODO: má být přesně naopak !$this->isInstanceOf($source)
+        if (!$source->isAncestorOf($this)) {
             throw new MessageException("Incompatible class in from:");
         }
 
