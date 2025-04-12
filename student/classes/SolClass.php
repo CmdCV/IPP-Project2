@@ -3,6 +3,7 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\Exceptions\FileStructureException;
 use IPP\Student\Exceptions\MessageException;
 use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFrame;
@@ -25,6 +26,9 @@ class SolClass extends Node
         $this->methods = $methods;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public static function fromXML(DOMElement $node): self
     {
         $name = $node->getAttribute('name');
@@ -32,14 +36,15 @@ class SolClass extends Node
         $solClass = new self($name, $parent);
 
         foreach ($node->getElementsByTagName('method') as $methodNode) {
-            if ($methodNode instanceof DOMElement) {
-                $solClass->addMethod(Method::fromXML($methodNode));
-            }
+            $solClass->addMethod(Method::fromXML($methodNode));
         }
 
         return $solClass;
     }
 
+    /**
+     * @throws ValueException
+     */
     public function linkParent(array $allClasses): void
     {
         if ($this->parentName === '' || $this->parentName === $this->name) {
@@ -48,7 +53,7 @@ class SolClass extends Node
         }
 
         if (!isset($allClasses[$this->parentName])) {
-            throw new ValueException("Unknown parent class '{$this->parentName}' for class '{$this->name}'");
+            throw new ValueException("Unknown parent class '$this->parentName' for class '$this->name'");
         }
 
         $this->parent = $allClasses[$this->parentName];
@@ -98,9 +103,11 @@ class SolClass extends Node
         return $instance;
     }
 
+    /**
+     * @throws MessageException
+     */
     public function instantiateFrom(ObjectInstance $source): ObjectInstance
     {
-        // TODO: má být přesně naopak !$this->isInstanceOf($source)
         if (!$source->isAncestorOf($this)) {
             throw new MessageException("Incompatible class in from:");
         }

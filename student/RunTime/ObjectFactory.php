@@ -3,7 +3,6 @@
 namespace IPP\Student\RunTime;
 
 use IPP\Student\Exceptions\ValueException;
-use IPP\Student\RunTime\ObjectInstance;
 use IPP\Student\Classes\SolClass;
 
 class ObjectFactory
@@ -20,20 +19,29 @@ class ObjectFactory
         self::$classes[$class->getName()] = $class;
     }
 
+    /**
+     * @throws ValueException
+     */
     public static function getClass(string $name): SolClass
     {
         return self::$classes[$name]
             ?? throw new ValueException("Class '$name' is not defined");
     }
 
+    /**
+     * @throws ValueException
+     */
     public static function integer(int $value): ObjectInstance
     {
         $class = self::getClass('Integer');
         $instance = $class->instantiate();
-        $instance->setAttribute('__value', $value); // interní atribut
+        $instance->setAttribute('__value', $value);
         return $instance;
     }
 
+    /**
+     * @throws ValueException
+     */
     public static function string(string $value): ObjectInstance
     {
         $class = self::getClass('String');
@@ -42,6 +50,9 @@ class ObjectFactory
         return $instance;
     }
 
+    /**
+     * @throws ValueException
+     */
     public static function true(): ObjectInstance
     {
         if (!self::$true) {
@@ -50,6 +61,9 @@ class ObjectFactory
         return self::$true;
     }
 
+    /**
+     * @throws ValueException
+     */
     public static function false(): ObjectInstance
     {
         if (!self::$false) {
@@ -58,6 +72,9 @@ class ObjectFactory
         return self::$false;
     }
 
+    /**
+     * @throws ValueException
+     */
     public static function nil(): ObjectInstance
     {
         if (!self::$nil) {
@@ -66,9 +83,11 @@ class ObjectFactory
         return self::$nil;
     }
 
+    /**
+     * @throws ValueException
+     */
     public static function classReference(string $name): ObjectInstance
     {
-        // pro výrazy jako `String from: ...`
         $class = self::getClass($name);
         return new ClassReference($class);
     }

@@ -10,6 +10,9 @@ class ObjectFrame
         private array $variables = []
     ) {}
 
+    /**
+     * @throws ValueException
+     */
     public function get(string $name): ObjectInstance
     {
         if (!array_key_exists($name, $this->variables)) {

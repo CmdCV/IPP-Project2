@@ -4,13 +4,17 @@ namespace IPP\Student\RunTime;
 
 use IPP\Student\Exceptions\MessageException;
 
-class SuperReference
+class SuperReference extends ObjectInstance
 {
-    public function __construct(private ObjectInstance $self) {}
+    private ObjectInstance $self;
+    public function __construct(ObjectInstance $instance) {
+        $this->self = $instance;
+        parent::__construct($instance->getClass());
+    }
 
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
-        $parent = $this->self->class->getParent();
+        $parent = $this->self->getClass()->getParent();
         if (!$parent) {
             throw new MessageException("super used but no parent class exists");
         }

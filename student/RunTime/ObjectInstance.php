@@ -42,12 +42,7 @@ class ObjectInstance
         $current = $this->class;
         while ($current !== null) {
             if ($current === $class) return true;
-            $parentName = $current->getParent();
-            if (is_string($parentName)) {
-                $current = ObjectFactory::getClass($parentName);
-            } else {
-                $current = $parentName;
-            }
+            $current = $current->getParent();
         }
         return false;
     }
@@ -57,19 +52,19 @@ class ObjectInstance
         $current = $class;
         while ($current !== null) {
             if ($current === $this->class) return true;
-            $parentName = $current->getParent();
-            if (is_string($parentName)) {
-                $current = \IPP\Student\RunTime\ObjectFactory::getClass($parentName);
-            } else {
-                $current = $parentName;
-            }
+            $current = $current->getParent();
         }
         return false;
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     * @throws TypeException
+     */
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
-        $this->debug_log("→ Sending message '{$selector}' to instance of class '{$this->class->getName()}'");
+        $this->debugLog("→ Sending message '$selector' to instance of class".$this->class->getName());
         // Normální metoda
         $method = $this->class->findMethod($selector, count($args));
         if ($method) {
@@ -77,7 +72,7 @@ class ObjectInstance
         }
 
         // Builtin fallback podle dědičnosti
-        if ($this->isInstanceOf(\IPP\Student\RunTime\ObjectFactory::getClass('Integer'))) {
+        if ($this->isInstanceOf(ObjectFactory::getClass('Integer'))) {
             return $this->handleIntegerBuiltins($selector, $args);
         }
         if ($this->isInstanceOf(ObjectFactory::getClass('String'))) {
@@ -96,12 +91,17 @@ class ObjectInstance
     }
 
 
+    /**
+     * @throws TypeException
+     * @throws ValueException
+     * @throws MessageException
+     */
     private function handleIntegerBuiltins(string $selector, array $args): ObjectInstance
     {
         $val = $this->attributes['__value'] ?? null;
         if (!is_int($val)) throw new ValueException("Integer value missing");
 
-        $this->debug_log("→ Integer triggered for '$selector' with value = $val");
+        $this->debugLog("→ Integer triggered for '$selector' with value = $val");
 
         return match ($selector) {
             'plus:' => ObjectFactory::integer($val + $this->requireIntArg($args, 0)),
@@ -122,12 +122,16 @@ class ObjectInstance
         };
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     */
     private function handleStringBuiltins(string $selector, array $args): ObjectInstance
     {
         $val = $this->attributes['__value'] ?? null;
         if (!is_string($val)) throw new ValueException("String value missing");
 
-        $this->debug_log("→ String triggered for '$selector' with value = $val");
+        $this->debugLog("→ String triggered for '$selector' with value = $val");
 
         return match ($selector) {
             'print' => (function () use ($val) {
@@ -149,11 +153,15 @@ class ObjectInstance
         };
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     */
     private function handleBooleanBuiltins(string $selector, array $args): ObjectInstance
     {
         $isTrue = $this->class->getName() === 'True';
 
-        $this->debug_log("→ Boolean triggered for '$selector' with value =" . $this->class->getName());
+        $this->debugLog("→ Boolean triggered for '$selector' with value =" . $this->class->getName());
 
         return match ($selector) {
             'not' => $isTrue ? ObjectFactory::false() : ObjectFactory::true(),
@@ -166,44 +174,51 @@ class ObjectInstance
         };
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     */
     private function handleNilBuiltins(string $selector, array $args): ObjectInstance
     {
-        $this->debug_log("→ Nil triggered for '$selector'");
+        $this->debugLog("→ Nil triggered for '$selector'");
         return match ($selector) {
             'asString' => ObjectFactory::string('nil'),
             'print' => (function () {
                 fwrite(STDOUT, "nil");
                 return $this;
             })(),
-            'isNumber' => ObjectFactory::false(),
-            'isString' => ObjectFactory::false(),
-            'isBlock' => ObjectFactory::false(),
+            'isNumber', 'isString', 'isBlock' => ObjectFactory::false(),
             'isNil' => ObjectFactory::true(),
             default => $this->handleObjectBuiltins($selector, $args),
         };
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     */
     private function handleObjectBuiltins(string $selector, array $args): ObjectInstance
     {
-        $this->debug_log("→ Object triggered for '$selector'");
+        $this->debugLog("→ Object triggered for '$selector'");
         return match ($selector) {
             'identicalTo:' => ($this === $args[0]) ? ObjectFactory::true() : ObjectFactory::false(),
             'equalTo:' => $this->shallowEqual($args[0]) ? ObjectFactory::true() : ObjectFactory::false(),
-            'isNumber' => ObjectFactory::false(),
-            'isString' => ObjectFactory::false(),
-            'isBlock' => ObjectFactory::false(),
-            'isNil' => ObjectFactory::false(),
+            'isNumber', 'isString', 'isBlock', 'isNil' => ObjectFactory::false(),
             'asString' => ObjectFactory::string(''),
             default => $this->handleFallbackAccessors($selector, $args),
         };
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     */
     private function handleFallbackAccessors(string $selector, array $args): ObjectInstance
     {
-        $this->debug_log("→ Fallback access triggered for '$selector'");
+        $this->debugLog("→ Fallback access triggered for '$selector'");
         if (str_ends_with($selector, ':') && count($args) === 1) {
             $attr = rtrim($selector, ':');
-            $this->debug_log("SET '$attr' := " . ($args[0]->getAttribute('__value') ?? 'undef'));
+            $this->debugLog("SET '$attr' := " . ($args[0]->getAttribute('__value') ?? 'undef'));
             $this->attributes[$attr] = $args[0];
             return $args[0];
         }
@@ -211,10 +226,10 @@ class ObjectInstance
         if (count($args) === 0) {
             $val = $this->attributes[$selector] ?? null;
             if ($val === null) {
-                $this->debug_log("GET '$selector' = nil");
-                return \IPP\Student\RunTime\ObjectFactory::nil();
+                $this->debugLog("GET '$selector' = nil");
+                return ObjectFactory::nil();
             }
-            $this->debug_log("GET '$selector' = " . ($val->getAttribute('__value') ?? 'undef'));
+            $this->debugLog("GET '$selector' = " . ($val->getAttribute('__value') ?? 'undef'));
             return $val;
         }
 
@@ -227,6 +242,9 @@ class ObjectInstance
             && $this->attributes === $other->attributes;
     }
 
+    /**
+     * @throws TypeException
+     */
     private function requireIntArg(array $args, int $i): int
     {
         $val = $args[$i]?->getAttribute('__value') ?? null;
@@ -237,9 +255,9 @@ class ObjectInstance
     }
 
 
-    public function debug_log(string $message, int $indent = 0): void
+    public function debugLog(string $message, int $indent = 0): void
     {
         $pad = str_repeat('  ', $indent);
-        fwrite(STDERR, "[DEBUG] {$pad}{$message}\n");
+        fwrite(STDERR, "[DEBUG] $pad$message\n");
     }
 }

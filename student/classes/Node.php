@@ -3,19 +3,11 @@
 namespace IPP\Student\Classes;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
+use ReflectionClass;
+use ReflectionObject;
 
 abstract class Node implements Parsable
 {
-
-    public function debug_log(string $message, int $indent = 0): void
-    {
-        $pad = str_repeat('  ', $indent);
-        fwrite(STDERR, "[DEBUG] {$pad}{$message}\n");
-    }
-    function debug_log_object_id(ObjectInstance $obj): void {
-        debug_log("Instance ID: " . spl_object_id($obj));
-    }
-
     public function __toString(): string
     {
         return $this->prettyPrint();
@@ -24,12 +16,11 @@ abstract class Node implements Parsable
     public function prettyPrint(int $indent = 0): string
     {
         $pad = str_repeat('  ', $indent);
-        $className = (new \ReflectionClass($this))->getShortName();
-        $out = "{$pad}{$className} {\n";
+        $className = (new ReflectionClass($this))->getShortName();
+        $out = "$pad$className {\n";
 
-        $ref = new \ReflectionObject($this);
+        $ref = new ReflectionObject($this);
         foreach ($ref->getProperties() as $prop) {
-            $prop->setAccessible(true);
             $key = $prop->getName();
             $value = $prop->getValue($this);
 
@@ -51,7 +42,7 @@ abstract class Node implements Parsable
             }
         }
 
-        $out .= "{$pad}}\n";
+        $out .= "$pad\n";
         return $out;
     }
 
