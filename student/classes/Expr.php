@@ -4,6 +4,8 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
+use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\BlockInstance;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
@@ -44,6 +46,9 @@ class Expr extends Node
         $this->var = $var;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public static function fromXML(DOMElement $node): self
     {
         $literal = null;
@@ -68,13 +73,17 @@ class Expr extends Node
                     $var = new VarNode($child->getAttribute('name'));
                     break;
                 default:
-                    throw new FileStructureException("Unknown child in <expr>: <{$child->nodeName}> not supported.");
+                    throw new FileStructureException("Unknown child in <expr>: <$child->nodeName> not supported.");
             }
         }
 
         return new self($literal, $send, $block, $var);
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
         if ($this->literal !== null) {

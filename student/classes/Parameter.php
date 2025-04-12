@@ -36,10 +36,10 @@ class Parameter extends Node
         return $this->name;
     }
 
-    public function print($indentLevel = 0): void
+    public function prettyPrint(int $indent = 0): string
     {
-        $indent = str_repeat('  ', $indentLevel);
-        echo $indent . "Parameter: order {$this->order} name {$this->name}\n";
+        $pad = str_repeat('  ', $indent);
+        return $pad . "Parameter: order $this->order name $this->name\n";
     }
 
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance

@@ -30,13 +30,16 @@ class Method extends Node
         $this->block = $block;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public static function fromXML(DOMElement $node): self
     {
         $selector = $node->getAttribute('selector');
         $blockElement = $node->getElementsByTagName('block')->item(0);
 
         if (!$blockElement instanceof DOMElement) {
-            throw new FileStructureException("Missing <block> element in method '{$selector}'");
+            throw new FileStructureException("Missing <block> element in method '$selector'");
         }
 
         $block = Block::fromXML($blockElement);
@@ -48,12 +51,15 @@ class Method extends Node
         throw new LogicException("Cannot execute a method directly.");
     }
 
+    /**
+     * @throws MessageException
+     */
     public function invoke(ObjectInstance $self, array $args): ObjectInstance
     {
         $parameters = $this->block->getParameters();
 
         if (count($args) !== count($parameters)) {
-            throw new MessageException("Wrong arity in method '{$this->selector}'");
+            throw new MessageException("Wrong arity in method '$this->selector'");
         }
 
         $frame = new ObjectFrame();

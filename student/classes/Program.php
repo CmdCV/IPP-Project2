@@ -4,6 +4,7 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFactory;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
@@ -15,6 +16,7 @@ class Program extends Node
     private string $description;
     /** @var SolClass[] */
     private array $classes;
+
     public function addClass(SolClass $class)
     {
         $this->classes[] = $class;
@@ -34,6 +36,7 @@ class Program extends Node
     {
         return $this->classes;
     }
+
     public function __construct(string $language, string $description, array $classes = [])
     {
         $this->language = $language;
@@ -48,16 +51,16 @@ class Program extends Node
         $program = new self($language, $description);
 
         foreach ($node->getElementsByTagName('class') as $classNode) {
-            if ($classNode instanceof DOMElement) {
-                $program->addClass(SolClass::fromXML($classNode));
-            }
+            $program->addClass(SolClass::fromXML($classNode));
         }
 
         return $program;
     }
 
 
-
+    /**
+     * @throws MessageException
+     */
     public function findClassByName(string $name): SolClass
     {
         foreach ($this->classes as $class) {
@@ -65,7 +68,7 @@ class Program extends Node
                 return $class;
             }
         }
-        throw new MessageException("Class '{$name}' not found when searching in Program.");
+        throw new MessageException("Class '$name' not found when searching in Program.");
     }
 
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
@@ -73,6 +76,10 @@ class Program extends Node
         throw new LogicException("Program node cannot be directly executed, use start() instead.");
     }
 
+    /**
+     * @throws MessageException
+     * @throws ValueException
+     */
     public function start(): void
     {
         $this->registerBuiltins();
@@ -86,6 +93,7 @@ class Program extends Node
         $mainClass = $this->findClassByName("Main");
         $mainClass->instantiate()->sendMessage("run", []);
     }
+
     private function registerBuiltins(): void
     {
         $this->addClass(new SolClass('Object', ''));
@@ -94,6 +102,10 @@ class Program extends Node
             $this->addClass(new SolClass($name, 'Object'));
         }
     }
+
+    /**
+     * @throws ValueException
+     */
     public function linkInheritance(): void
     {
         $classMap = [];

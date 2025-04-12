@@ -3,6 +3,7 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\Exceptions\FileStructureException;
 use IPP\Student\RunTime\ObjectFactory;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
@@ -55,6 +56,9 @@ class Block extends Node
         $this->expressions = $expressions;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public static function fromXML(DOMElement $node): self
     {
         $arity = (int)$node->getAttribute('arity');

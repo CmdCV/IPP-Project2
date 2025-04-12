@@ -1,6 +1,6 @@
 <?php
 
-namespace IPP\Student\classes;
+namespace IPP\Student\Classes;
 
 use DOMElement;
 

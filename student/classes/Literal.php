@@ -32,7 +32,7 @@ class Literal extends Node
     public function prettyPrint(int $indent = 0): string
     {
         $pad = str_repeat('  ', $indent);
-        return "{$pad}Literal(classType={$this->classType}, value={$this->value})\n";
+        return $pad."Literal(classType=$this->classType, value=$this->value)\n";
     }
 
     public static function fromXML(DOMElement $node): self
@@ -43,6 +43,9 @@ class Literal extends Node
         );
     }
 
+    /**
+     * @throws ValueException
+     */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
         return match ($this->classType) {
@@ -51,8 +54,8 @@ class Literal extends Node
             'True' => ObjectFactory::true(),
             'False' => ObjectFactory::false(),
             'Nil' => ObjectFactory::nil(),
-            'class' => ObjectFactory::classReference($this->value), // např. String.from:
-            default => throw new ValueException("Unknown literal class: {$this->classType}")
+            'class' => ObjectFactory::classReference($this->value),
+            default => throw new ValueException("Unknown literal class: $this->classType")
         };
     }
 }

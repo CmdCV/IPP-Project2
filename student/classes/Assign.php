@@ -35,6 +35,9 @@ class Assign extends Node
         $this->expr = $expr;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public static function fromXML(DOMElement $node): self
     {
         $order = (int)$node->getAttribute('order');

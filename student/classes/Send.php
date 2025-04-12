@@ -5,6 +5,7 @@ namespace IPP\Student\Classes;
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
 use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
 
@@ -40,19 +41,22 @@ class Send extends Node
     public function prettyPrint(int $indent = 0): string
     {
         $pad = str_repeat('  ', $indent);
-        $out = "{$pad}Send {\n";
-        $out .= "{$pad}  selector: {$this->selector}\n";
-        $out .= "{$pad}  receiver:\n" . $this->expr->prettyPrint($indent + 2);
+        $out = $pad."Send {\n";
+        $out .= $pad."  selector: $this->selector\n";
+        $out .= $pad."  receiver:\n" . $this->expr->prettyPrint($indent + 2);
         if (!empty($this->arguments)) {
-            $out .= "{$pad}  arguments:\n";
+            $out .= $pad."  arguments:\n";
             foreach ($this->arguments as $arg) {
                 $out .= $arg->prettyPrint($indent + 2);
             }
         }
-        $out .= "{$pad}}\n";
+        $out .= $pad."}\n";
         return $out;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public static function fromXML(DOMElement $node): self
     {
         $selector = $node->getAttribute('selector');
@@ -84,6 +88,10 @@ class Send extends Node
         return new self($selector, $receiver, $args);
     }
 
+    /**
+     * @throws ValueException
+     * @throws MessageException
+     */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
         // 1. Vyhodnotíme příjemce zprávy (např. self, nebo (String read))

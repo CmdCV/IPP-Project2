@@ -3,6 +3,7 @@
 namespace IPP\Student\Classes;
 
 use DOMDocument;
+use IPP\Student\Exceptions\FileStructureException;
 
 class XMLParser
 {
@@ -13,8 +14,14 @@ class XMLParser
         $this->source = $source;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public function parseProgram(): Program
     {
-        return Program::fromXML($this->source->documentElement);
+        if($this->source->documentElement!==null) {
+            return Program::fromXML($this->source->documentElement);
+        }
+        throw new FileStructureException("DocumentElement is Null");
     }
 }
