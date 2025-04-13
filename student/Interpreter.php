@@ -29,7 +29,7 @@ class Interpreter extends AbstractInterpreter
         $dom = $this->source->getDOMDocument();
         $parser = new XMLParser($dom);
         $program = $parser->parseProgram();
-        fwrite(STDERR, $program);
+//        fwrite(STDERR, $program);
         $program->start();
         return ReturnCode::OK;
 
