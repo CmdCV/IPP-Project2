@@ -4,7 +4,9 @@
 /examples/
 is_it_ok.log
 
+.venv
 .idea
+tests_mrm/
 tests/
 test.sh
 out.txt

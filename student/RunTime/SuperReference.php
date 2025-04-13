@@ -14,16 +14,24 @@ class SuperReference extends ObjectInstance
 
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
-        $parent = $this->self->getClass()->getParent();
-        if (!$parent) {
-            throw new MessageException("super used but no parent class exists");
+        $class = $this->self->getClass()->getParent();
+        while ($class !== null) {
+            $method = $class->findMethod($selector);
+            if ($method !== null) {
+                return $method->invoke($this->self, $args);
+            }
+
+            // pokud narazíme na vestavěnou třídu, zkusíme její vestavěný handler
+            $builtinNames = ['Integer', 'String', 'True', 'False', 'Nil', 'Object'];
+            if (in_array($class->getName(), $builtinNames)) {
+                $tmp = new ObjectInstance($class);
+                $tmp->setAttribute('__value', $this->self->getAttribute('__value') ?? null);
+                return $tmp->sendMessage($selector, $args);
+            }
+
+            $class = $class->getParent();
         }
 
-        $method = $parent->findMethod($selector, count($args));
-        if (!$method) {
-            throw new MessageException("super does not understand '$selector'");
-        }
-
-        return $method->invoke($this->self, $args); // invoke na původním self
+        throw new MessageException("super does not understand '$selector'");
     }
 }

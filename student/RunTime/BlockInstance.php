@@ -23,42 +23,41 @@ class BlockInstance extends ObjectInstance
 
     /**
      * @throws MessageException
+     * @throws ValueException
      */
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
         $arity = substr_count($selector, ':');
 
-        // value, value:, value:value:
-        if ($selector === str_repeat('value:', $arity)) {
-            if ($arity !== $this->block->getArity()) {
-                throw new MessageException("Block arity mismatch");
-            }
-
-            $frame = new ObjectFrame();
-            foreach ($this->block->getParameters() as $i => $param) {
-                $frame->set($param->getName(), $args[$i]);
-            }
-
-            return $this->block->execute($this->definingSelf, $frame);
-        }
-
-        // ⛔️ Chybí: čistý `value` bez dvojtečky
-        if ($selector === 'value' && $this->block->getArity() === 0) {
-            return $this->block->execute($this->definingSelf, new ObjectFrame());
-        }
-
-        // whileTrue:
-        if ($selector === 'whileTrue:') {
-            $result = ObjectFactory::nil();
-            while (true) {
-                $cond = $this->sendMessage('value', []);
-                if ($cond->getClass()->getName() !== 'True') {
-                    break;
+        return match ($selector) {
+            'isNumber','isNil', 'isString' => ObjectFactory::false(),
+            'isBlock' => ObjectFactory::true(),
+            str_repeat('value:', $arity) => (function () use ($arity, $args) {
+                if ($arity !== $this->block->getArity()) {
+                    throw new MessageException("Block arity mismatch");
                 }
-                $result = $args[0]->sendMessage('value', []);
-            }
-            return $result;
-        }
+
+                $frame = new ObjectFrame();
+                foreach ($this->block->getParameters() as $i => $param) {
+                    $frame->set($param->getName(), $args[$i]);
+                }
+
+                return $this->block->execute($this->definingSelf, $frame);
+            })(),
+            'value' => $this->block->execute($this->definingSelf, new ObjectFrame()),
+            'whileTrue:' => (function () use ($args) {
+                $result = ObjectFactory::nil();
+                while (true) {
+                    $cond = $this->sendMessage('value', []);
+                    if ($cond->getClass()->getName() !== 'True') {
+                        break;
+                    }
+                    $result = $args[0]->sendMessage('value', []);
+                }
+                return $result;
+            })(),
+            default => $this->handleObjectBuiltins($selector, $args),
+        };
 
         throw new MessageException("Block does not understand $selector");
     }

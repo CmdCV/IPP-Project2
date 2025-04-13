@@ -4,6 +4,7 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
+use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFactory;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
@@ -51,7 +52,9 @@ class Block extends Node
     public function __construct(int $arity, array $assignments = [], array $parameters = [], array $expressions = [])
     {
         $this->arity = $arity;
+        usort($assignments, fn($a, $b) => $a->getOrder() <=> $b ->getOrder());
         $this->assignments = $assignments;
+        usort($parameters, fn($a, $b) => $a->getOrder() <=> $b ->getOrder());
         $this->parameters = $parameters;
         $this->expressions = $expressions;
     }
@@ -62,6 +65,8 @@ class Block extends Node
     public static function fromXML(DOMElement $node): self
     {
         $arity = (int)$node->getAttribute('arity');
+        $assignments = [];
+        $parameters = [];
         $block = new self($arity);
 
         foreach ($node->childNodes as $child) {
@@ -69,17 +74,23 @@ class Block extends Node
 
             switch ($child->nodeName) {
                 case 'parameter':
-                    $block->addParameter(Parameter::fromXML($child));
+                    $parameters[] = Parameter::fromXML($child);
+//                    $block->addParameter(Parameter::fromXML($child));
                     break;
                 case 'assign':
-                    $block->addAssignment(Assign::fromXML($child));
+                    $assignments[] = Assign::fromXML($child);
+//                    $block->addAssignment(Assign::fromXML($child));
                     break;
             }
         }
 
-        return $block;
+        return new self($arity, $assignments, $parameters);
+//        return $block;
     }
 
+    /**
+     * @throws ValueException
+     */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
         $result = ObjectFactory::nil();

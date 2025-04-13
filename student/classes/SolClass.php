@@ -4,7 +4,6 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
-use IPP\Student\Exceptions\MessageException;
 use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
@@ -79,14 +78,14 @@ class SolClass extends Node
         return $this->methods;
     }
 
-    public function findMethod(string $selector, int $arity): ?Method
+    public function findMethod(string $selector): ?Method
     {
         foreach ($this->methods as $method) {
-            if ($method->getSelector() === $selector && $method->getBlock()->getArity() === $arity) {
+            if ($method->getSelector() === $selector) {
                 return $method;
             }
         }
-        return $this->parent?->findMethod($selector, $arity);
+        return $this->parent?->findMethod($selector);
     }
 
     public function instantiate(): ObjectInstance
@@ -103,19 +102,21 @@ class SolClass extends Node
         return $instance;
     }
 
+
     /**
-     * @throws MessageException
+     * @throws ValueException
      */
     public function instantiateFrom(ObjectInstance $source): ObjectInstance
     {
         if (!$source->isAncestorOf($this)) {
-            throw new MessageException("Incompatible class in from:");
+            throw new ValueException("Incompatible class in from: {$source->getClass()->getName()} is not instance of {$this->getName()}");
         }
 
         $new = $this->instantiate();
         foreach ($source->getAllAttributes() as $name => $value) {
             $new->setAttribute($name, $value);
         }
+
         return $new;
     }
 

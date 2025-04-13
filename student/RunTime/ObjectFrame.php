@@ -2,6 +2,7 @@
 
 namespace IPP\Student\RunTime;
 
+use IPP\Student\Exceptions\TypeException;
 use IPP\Student\Exceptions\ValueException;
 
 class ObjectFrame
@@ -11,12 +12,12 @@ class ObjectFrame
     ) {}
 
     /**
-     * @throws ValueException
+     * @throws TypeException
      */
     public function get(string $name): ObjectInstance
     {
         if (!array_key_exists($name, $this->variables)) {
-            throw new ValueException("Undefined variable: $name");
+            throw new TypeException("Undefined variable: $name");
         }
         return $this->variables[$name];
     }

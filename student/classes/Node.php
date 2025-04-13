@@ -23,7 +23,7 @@ abstract class Node implements Parsable
         foreach ($ref->getProperties() as $prop) {
             $key = $prop->getName();
             $value = $prop->getValue($this);
-
+            if ($value === null) continue;
             $out .= $pad . '  ' . $key . ': ';
             if ($value instanceof Node) {
                 $out .= "\n" . $value->prettyPrint($indent + 2);
@@ -42,7 +42,7 @@ abstract class Node implements Parsable
             }
         }
 
-        $out .= "$pad\n";
+        $out .= "$pad}\n";
         return $out;
     }
 

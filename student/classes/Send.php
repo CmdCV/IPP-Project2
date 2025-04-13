@@ -35,6 +35,7 @@ class Send extends Node
     {
         $this->selector = $selector;
         $this->expr = $expr;
+        usort($arguments, fn($a, $b) => $a->getOrder() <=> $b->getOrder());
         $this->arguments = $arguments;
     }
 

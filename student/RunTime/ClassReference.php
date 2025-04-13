@@ -4,6 +4,8 @@ namespace IPP\Student\RunTime;
 
 use IPP\Student\Classes\SolClass;
 use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\TypeException;
+use IPP\Student\Exceptions\ValueException;
 
 class ClassReference extends ObjectInstance
 {
@@ -13,29 +15,17 @@ class ClassReference extends ObjectInstance
     }
 
     /**
+     * @throws ValueException
      * @throws MessageException
+     * @throws TypeException
      */
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
         return match ($selector) {
             'new' => $this->getClass()->instantiate(),
-            'from:' => $this->getClass()->instantiateFrom($args[0]),
-            'read' => $this->handleRead(),
-            default => throw new MessageException("Class does not understand $selector")
+            'from:', 'super:' => $this->getClass()->instantiateFrom($args[0]),
+            default => parent::sendMessage($selector, $args),
         };
-    }
-
-    /**
-     * @throws MessageException
-     */
-    private function handleRead(): ObjectInstance
-    {
-        if ($this->getClass()->isSubclassOf('String')) {
-            $line = rtrim(fgets(STDIN), "\\r\\n");
-            return ObjectFactory::string($line);
-        }
-
-        throw new MessageException("read not supported on {$this->getClass()->getName()}");
     }
 
 }

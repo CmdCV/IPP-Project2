@@ -4,6 +4,7 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\TypeException;
 use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFactory;
 use IPP\Student\RunTime\ObjectFrame;
@@ -59,7 +60,7 @@ class Program extends Node
 
 
     /**
-     * @throws MessageException
+     * @throws TypeException
      */
     public function findClassByName(string $name): SolClass
     {
@@ -68,7 +69,7 @@ class Program extends Node
                 return $class;
             }
         }
-        throw new MessageException("Class '$name' not found when searching in Program.");
+        throw new TypeException("Class '$name' not found when searching in Program.");
     }
 
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
@@ -79,6 +80,7 @@ class Program extends Node
     /**
      * @throws MessageException
      * @throws ValueException
+     * @throws TypeException
      */
     public function start(): void
     {
@@ -91,6 +93,9 @@ class Program extends Node
         }
 
         $mainClass = $this->findClassByName("Main");
+        if($mainClass->findMethod("run") === null) {
+            throw new TypeException("Main class does not have a run method.");
+        }
         $mainClass->instantiate()->sendMessage("run", []);
     }
 

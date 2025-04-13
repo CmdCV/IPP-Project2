@@ -51,6 +51,7 @@ class ObjectFactory
     }
 
     /**
+     * Returns the singleton instance of True. This object should be considered immutable.
      * @throws ValueException
      */
     public static function true(): ObjectInstance
@@ -58,10 +59,12 @@ class ObjectFactory
         if (!self::$true) {
             self::$true = self::getClass('True')->instantiate();
         }
+//        self::debugLog("TRUE ID = " . spl_object_id(self::$true));
         return self::$true;
     }
 
     /**
+     * Returns the singleton instance of False. This object should be considered immutable.
      * @throws ValueException
      */
     public static function false(): ObjectInstance
@@ -69,10 +72,12 @@ class ObjectFactory
         if (!self::$false) {
             self::$false = self::getClass('False')->instantiate();
         }
+//        self::debugLog("FALSE ID = " . spl_object_id(self::$false));
         return self::$false;
     }
 
     /**
+     * Returns the singleton instance of Nil. This object should be considered immutable.
      * @throws ValueException
      */
     public static function nil(): ObjectInstance

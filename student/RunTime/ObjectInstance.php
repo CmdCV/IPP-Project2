@@ -64,9 +64,9 @@ class ObjectInstance
      */
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
-        $this->debugLog("→ Sending message '$selector' to instance of class".$this->class->getName());
+        $this->debugLog("→ Sending message '$selector' to instance of class ".$this->class->getName());
         // Normální metoda
-        $method = $this->class->findMethod($selector, count($args));
+        $method = $this->class->findMethod($selector);
         if ($method) {
             return $method->invoke($this, $args);
         }
@@ -90,6 +90,30 @@ class ObjectInstance
         throw new MessageException("Unknown message $selector");
     }
 
+    /**
+     * @throws MessageException
+     * @throws ValueException
+     */
+    private function handleRead(string $class): ObjectInstance
+    {
+        $line="";
+        switch ($class) {
+            case "String":
+                $line = IOContext::$input->readString();
+                break;
+            case "Integer":
+                $line = IOContext::$input->readInt();
+                break;
+            case "Boolean":
+                $line = IOContext::$input->readBool();
+                break;
+        }
+        if($line !== "") {
+            return ObjectFactory::string(rtrim($line, "\n\r"));
+        }
+
+        throw new MessageException("read not supported on {$this->getClass()->getName()}");
+    }
 
     /**
      * @throws TypeException
@@ -99,56 +123,91 @@ class ObjectInstance
     private function handleIntegerBuiltins(string $selector, array $args): ObjectInstance
     {
         $val = $this->attributes['__value'] ?? null;
-        if (!is_int($val)) throw new ValueException("Integer value missing");
+        if (!is_int($val)&&!is_null($val)) throw new ValueException("Integer value missing, got: " . gettype($val));
 
-        $this->debugLog("→ Integer triggered for '$selector' with value = $val");
+        $this->debugLog("→ Integer triggered for '$selector' with this = (" . $val . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
 
+        // TODO: timesRepeat:
+        // Jako argument očekává instanci, která rozumí zprávě value:20. Pokud (a jen tehdy, když)
+        // je příjemce n > 0, blok z argumentu se provede n-krát. Bloku resp. argumentu se předá
+        // jako argument číslo iterace (od 1 do n včetně).
         return match ($selector) {
+//            'read' => $this->handleRead("Integer"),
+            'divBy:' => $this->requireIntArg($args, 0) === 0 ? throw new ValueException("Division by zero") : ObjectFactory::integer(intdiv($val, $this->requireIntArg($args, 0))),
+            'equalTo:' => $val === $this->requireIntArg($args, 0) ? ObjectFactory::true() : ObjectFactory::false(),
+            'greaterThan:' => $val > $this->requireIntArg($args, 0) ? ObjectFactory::true() : ObjectFactory::false(),
             'plus:' => ObjectFactory::integer($val + $this->requireIntArg($args, 0)),
             'minus:' => ObjectFactory::integer($val - $this->requireIntArg($args, 0)),
             'multiplyBy:' => ObjectFactory::integer($val * $this->requireIntArg($args, 0)),
-            'divBy:' => $this->requireIntArg($args, 0) === 0
-                ? throw new MessageException("Division by zero")
-                : ObjectFactory::integer(intdiv($val, $this->requireIntArg($args, 0))),
-            'greaterThan:' => $val > $this->requireIntArg($args, 0)
-                ? ObjectFactory::true() : ObjectFactory::false(),
-            'lessThan:' => $val < $this->requireIntArg($args, 0)
-                ? ObjectFactory::true() : ObjectFactory::false(),
-            'equalTo:' => $val === $this->requireIntArg($args, 0)
-                ? ObjectFactory::true() : ObjectFactory::false(),
+//            'lessThan:' => $val < $this->requireIntArg($args, 0) ? ObjectFactory::true() : ObjectFactory::false(),
             'asString' => ObjectFactory::string((string)$val),
             'asInteger' => $this,
+            'timesRepeat:' => (function () use ($val, $args) {
+                if (!isset($args[0])) {
+                    throw new ValueException("Missing block argument in timesRepeat:");
+                }
+                $block = $args[0];
+//                if (!($block instanceof ObjectInstance) || !$block->getClass()->understandsMessage('value:')) {
+//                    throw new TypeException("Expected block with value: method");
+//                }
+                if (!is_int($val)) {
+                    throw new ValueException("Receiver is not an integer");
+                }
+                $this->debugLog("→ timesRepeat: executing block $val times");
+
+                for ($i = 1; $i <= $val; $i++) {
+                    $block->sendMessage('value:', [ObjectFactory::integer($i)]);
+                }
+                return ObjectFactory::nil();
+            })(),
+            'isString','isNil', 'isBlock' => ObjectFactory::false(),
+            'isNumber' => ObjectFactory::true(),
             default => $this->handleObjectBuiltins($selector, $args),
         };
     }
 
     /**
      * @throws ValueException
+     * @throws TypeException
      * @throws MessageException
      */
     private function handleStringBuiltins(string $selector, array $args): ObjectInstance
     {
         $val = $this->attributes['__value'] ?? null;
-        if (!is_string($val)) throw new ValueException("String value missing");
+        if (!is_string($val)&&!is_null($val)) throw new ValueException("String value missing, got: " . $val);
 
-        $this->debugLog("→ String triggered for '$selector' with value = $val");
+        $this->debugLog("→ String triggered for '$selector' with this = (" . $val . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
 
         return match ($selector) {
+            'read' => $this->handleRead("String"),
             'print' => (function () use ($val) {
-                fwrite(STDOUT, $val);
+                IOContext::$stdout->writeString($val);
                 return $this;
             })(),
+            'equalTo:' => $val === $this->requireStringArg($args, 0) ? ObjectFactory::true() : ObjectFactory::false(),
             'asString' => $this,
             'asInteger' => is_numeric($val) ? ObjectFactory::integer((int)$val) : ObjectFactory::nil(),
-            'concatenateWith:' => ObjectFactory::string($val . ($args[0]->getAttribute('__value') ?? '')),
+            'concatenateWith:' => (function () use ($val, $args) {
+                $arg = $args[0] ?? null;
+                if ($arg?->isInstanceOf(ObjectFactory::getClass('String'))) {
+                    $argVal = $arg->getAttribute('__value') ?? '';
+                    return ObjectFactory::string($val . $argVal);
+                }
+                return ObjectFactory::nil();
+            })(),
             'startsWith:endsBefore:' => (function () use ($val, $args) {
                 $start = $args[0]->getAttribute('__value') ?? null;
                 $end = $args[1]->getAttribute('__value') ?? null;
-                if (!is_int($start) || !is_int($end) || $start < 1 || $end <= $start) {
+                if (!is_int($start) || !is_int($end) || $start <= 0 || $end <= 0) {
+                    return ObjectFactory::nil();
+                }
+                if ($end <= $start) {
                     return ObjectFactory::string('');
                 }
                 return ObjectFactory::string(substr($val, $start - 1, $end - $start));
             })(),
+            'isNumber','isNil', 'isBlock' => ObjectFactory::false(),
+            'isString' => ObjectFactory::true(),
             default => $this->handleObjectBuiltins($selector, $args),
         };
     }
@@ -159,17 +218,21 @@ class ObjectInstance
      */
     private function handleBooleanBuiltins(string $selector, array $args): ObjectInstance
     {
+        //TODO: funguje and: a or:?
         $isTrue = $this->class->getName() === 'True';
 
-        $this->debugLog("→ Boolean triggered for '$selector' with value =" . $this->class->getName());
+        $this->debugLog("→ Boolean triggered for '$selector' with value = " . $this->class->getName() . " args = [" . (isset($args[0]) ? $args[0]->getClass()->getName() : 'undef') . "]");
 
         return match ($selector) {
+//            'read' => $this->handleRead("Boolean"),
             'not' => $isTrue ? ObjectFactory::false() : ObjectFactory::true(),
             'and:' => $isTrue ? $args[0]->sendMessage('value', []) : ObjectFactory::false(),
             'or:' => $isTrue ? ObjectFactory::true() : $args[0]->sendMessage('value', []),
-            'ifTrue:ifFalse:' => $isTrue
-                ? $args[0]->sendMessage('value', [])
-                : $args[1]->sendMessage('value', []),
+            'ifTrue:ifFalse:' =>(function () use ($args,$isTrue) {
+                return $isTrue ? $args[0]->sendMessage('value', []) : $args[1]->sendMessage('value', []);
+            })(),
+            'identicalTo:' => $this->class->getName() === $args[0]->class->getName() ? ObjectFactory::true() : ObjectFactory::false(),
+            'isNumber', 'isString','isNil', 'isBlock' => ObjectFactory::false(),
             default => $this->handleObjectBuiltins($selector, $args),
         };
     }
@@ -183,10 +246,11 @@ class ObjectInstance
         $this->debugLog("→ Nil triggered for '$selector'");
         return match ($selector) {
             'asString' => ObjectFactory::string('nil'),
-            'print' => (function () {
-                fwrite(STDOUT, "nil");
-                return $this;
-            })(),
+//            'print' => (function () {
+//                IOContext::$stdout->writeString("nil");
+//                return $this;
+//            })(),
+            'identicalTo:' => $this->class->getName() === $args[0]->class->getName() ? ObjectFactory::true() : ObjectFactory::false(),
             'isNumber', 'isString', 'isBlock' => ObjectFactory::false(),
             'isNil' => ObjectFactory::true(),
             default => $this->handleObjectBuiltins($selector, $args),
@@ -197,14 +261,14 @@ class ObjectInstance
      * @throws ValueException
      * @throws MessageException
      */
-    private function handleObjectBuiltins(string $selector, array $args): ObjectInstance
+    protected function handleObjectBuiltins(string $selector, array $args): ObjectInstance
     {
-        $this->debugLog("→ Object triggered for '$selector'");
+        $this->debugLog("→ Nil triggered for '$selector' with this = (" . ($this->getAttribute('__value') ?? 'undef') . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
         return match ($selector) {
             'identicalTo:' => ($this === $args[0]) ? ObjectFactory::true() : ObjectFactory::false(),
             'equalTo:' => $this->shallowEqual($args[0]) ? ObjectFactory::true() : ObjectFactory::false(),
-            'isNumber', 'isString', 'isBlock', 'isNil' => ObjectFactory::false(),
             'asString' => ObjectFactory::string(''),
+            'isNumber', 'isString', 'isBlock', 'isNil' => ObjectFactory::false(),
             default => $this->handleFallbackAccessors($selector, $args),
         };
     }
@@ -215,19 +279,21 @@ class ObjectInstance
      */
     private function handleFallbackAccessors(string $selector, array $args): ObjectInstance
     {
-        $this->debugLog("→ Fallback access triggered for '$selector'");
+        $this->debugLog("→ Fallback access triggered for '$selector' with this = (" . ($this->getAttribute('__value') ?? 'undef') . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
         if (str_ends_with($selector, ':') && count($args) === 1) {
             $attr = rtrim($selector, ':');
             $this->debugLog("SET '$attr' := " . ($args[0]->getAttribute('__value') ?? 'undef'));
             $this->attributes[$attr] = $args[0];
+            $this->debugLog("Attributes available: [" . implode(', ', array_keys($this->attributes)) . "]");
             return $args[0];
         }
 
         if (count($args) === 0) {
             $val = $this->attributes[$selector] ?? null;
+            $this->debugLog("Attributes available: [" . implode(', ', array_keys($this->attributes)) . "]");
             if ($val === null) {
                 $this->debugLog("GET '$selector' = nil");
-                return ObjectFactory::nil();
+                throw new MessageException("Attribute '$selector' not found");
             }
             $this->debugLog("GET '$selector' = " . ($val->getAttribute('__value') ?? 'undef'));
             return $val;
@@ -238,8 +304,9 @@ class ObjectInstance
 
     private function shallowEqual(ObjectInstance $other): bool
     {
-        return $this->class === $other->class
-            && $this->attributes === $other->attributes;
+        $this->debugLog("→ Shallow equal check for " . $this->getClass()->getName() . " and " . $other->getClass()->getName());
+        return $this->getClass() === $other->getClass()
+            && $this->getAllAttributes() === $other->getAllAttributes();
     }
 
     /**
@@ -249,7 +316,18 @@ class ObjectInstance
     {
         $val = $args[$i]?->getAttribute('__value') ?? null;
         if (!is_int($val)) {
-            throw new TypeException("Expected Integer argument");
+            throw new ValueException("Expected Integer argument");
+        }
+        return $val;
+    }
+    /**
+     * @throws TypeException
+     */
+    private function requireStringArg(array $args, int $i): string
+    {
+        $val = $args[$i]?->getAttribute('__value') ?? null;
+        if (!is_string($val)) {
+            throw new ValueException("Expected String argument");
         }
         return $val;
     }
@@ -257,7 +335,9 @@ class ObjectInstance
 
     public function debugLog(string $message, int $indent = 0): void
     {
-        $pad = str_repeat('  ', $indent);
-        fwrite(STDERR, "[DEBUG] $pad$message\n");
+        if (IOContext::$debug) {
+            $pad = str_repeat('  ', $indent);
+            IOContext::$stderr->writeString("[DEBUG] $pad$message\n");
+        }
     }
 }
