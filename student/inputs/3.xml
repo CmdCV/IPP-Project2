@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<program language="SOL25">
-    <class name="A" parent="Object" />
-    <class name="Main" parent="A">
-        <method selector="run">
-            <block arity="0" />
-        </method>
-    </class>
-</program>

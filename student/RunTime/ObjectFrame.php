@@ -3,7 +3,6 @@
 namespace IPP\Student\RunTime;
 
 use IPP\Student\Exceptions\TypeException;
-use IPP\Student\Exceptions\ValueException;
 
 class ObjectFrame
 {

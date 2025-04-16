@@ -21,7 +21,6 @@ class SuperReference extends ObjectInstance
                 return $method->invoke($this->self, $args);
             }
 
-            // pokud narazíme na vestavěnou třídu, zkusíme její vestavěný handler
             $builtinNames = ['Integer', 'String', 'True', 'False', 'Nil', 'Object'];
             if (in_array($class->getName(), $builtinNames)) {
                 $tmp = new ObjectInstance($class);

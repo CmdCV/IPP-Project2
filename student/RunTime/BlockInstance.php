@@ -4,6 +4,7 @@ namespace IPP\Student\RunTime;
 
 use IPP\Student\Classes\Block;
 use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\TypeException;
 use IPP\Student\Exceptions\ValueException;
 
 class BlockInstance extends ObjectInstance
@@ -24,6 +25,7 @@ class BlockInstance extends ObjectInstance
     /**
      * @throws MessageException
      * @throws ValueException
+     * @throws TypeException
      */
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
@@ -58,7 +60,5 @@ class BlockInstance extends ObjectInstance
             })(),
             default => $this->handleObjectBuiltins($selector, $args),
         };
-
-        throw new MessageException("Block does not understand $selector");
     }
 }

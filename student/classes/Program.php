@@ -3,6 +3,7 @@
 namespace IPP\Student\Classes;
 
 use DOMElement;
+use IPP\Student\Exceptions\FileStructureException;
 use IPP\Student\Exceptions\MessageException;
 use IPP\Student\Exceptions\TypeException;
 use IPP\Student\Exceptions\ValueException;
@@ -18,7 +19,7 @@ class Program extends Node
     /** @var SolClass[] */
     private array $classes;
 
-    public function addClass(SolClass $class)
+    public function addClass(SolClass $class): void
     {
         $this->classes[] = $class;
     }
@@ -45,6 +46,9 @@ class Program extends Node
         $this->classes = $classes;
     }
 
+    /**
+     * @throws FileStructureException
+     */
     public static function fromXML(DOMElement $node): self
     {
         $language = $node->getAttribute('language');

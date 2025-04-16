@@ -11,7 +11,7 @@ use IPP\Student\RunTime\ObjectInstance;
 class Literal extends Node
 {
     private string $classType;
-    private $value;
+    private mixed $value;
 
     public function getClassType(): string
     {

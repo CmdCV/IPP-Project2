@@ -4,6 +4,9 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
+use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\TypeException;
+use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
 
@@ -47,6 +50,11 @@ class Arg extends Node
         return new self($order, $expr);
     }
 
+    /**
+     * @throws TypeException
+     * @throws ValueException
+     * @throws MessageException
+     */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
         return $this->expr->execute($self, $frame);

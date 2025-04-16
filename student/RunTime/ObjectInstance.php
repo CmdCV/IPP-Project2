@@ -162,8 +162,33 @@ class ObjectInstance
             })(),
             'isString','isNil', 'isBlock' => ObjectFactory::false(),
             'isNumber' => ObjectFactory::true(),
+            'whileTrue:' => $this->handleWhileTrue($args[0]),
             default => $this->handleObjectBuiltins($selector, $args),
         };
+    }
+
+    /**
+     * @throws TypeException
+     * @throws ValueException
+     * @throws MessageException
+     */
+    private function handleWhileTrue(ObjectInstance $block): ObjectInstance
+    {
+        while (true) {
+            $condition = $this->sendMessage("value", []);
+            if (!$condition->getClass()->isSubclassOf("Boolean")) {
+                throw new MessageException("whileTrue: expects boolean result from value");
+            }
+
+            $boolVal = $condition->getAttribute('__value') ?? false;
+            if (!$boolVal) {
+                break;
+            }
+
+            $block->sendMessage("value", []);
+        }
+
+        return ObjectFactory::nil();
     }
 
     /**
@@ -218,7 +243,6 @@ class ObjectInstance
      */
     private function handleBooleanBuiltins(string $selector, array $args): ObjectInstance
     {
-        //TODO: funguje and: a or:?
         $isTrue = $this->class->getName() === 'True';
 
         $this->debugLog("→ Boolean triggered for '$selector' with value = " . $this->class->getName() . " args = [" . (isset($args[0]) ? $args[0]->getClass()->getName() : 'undef') . "]");
@@ -263,7 +287,7 @@ class ObjectInstance
      */
     protected function handleObjectBuiltins(string $selector, array $args): ObjectInstance
     {
-        $this->debugLog("→ Nil triggered for '$selector' with this = (" . ($this->getAttribute('__value') ?? 'undef') . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
+        $this->debugLog("→ Object triggered for '$selector' with this = (" . ($this->getAttribute('__value') ?? 'undef') . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
         return match ($selector) {
             'identicalTo:' => ($this === $args[0]) ? ObjectFactory::true() : ObjectFactory::false(),
             'equalTo:' => $this->shallowEqual($args[0]) ? ObjectFactory::true() : ObjectFactory::false(),
@@ -310,7 +334,7 @@ class ObjectInstance
     }
 
     /**
-     * @throws TypeException
+     * @throws ValueException
      */
     private function requireIntArg(array $args, int $i): int
     {
@@ -320,8 +344,9 @@ class ObjectInstance
         }
         return $val;
     }
+
     /**
-     * @throws TypeException
+     * @throws ValueException
      */
     private function requireStringArg(array $args, int $i): string
     {

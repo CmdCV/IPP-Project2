@@ -4,6 +4,8 @@ namespace IPP\Student\Classes;
 
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
+use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\TypeException;
 use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFactory;
 use IPP\Student\RunTime\ObjectFrame;
@@ -67,7 +69,6 @@ class Block extends Node
         $arity = (int)$node->getAttribute('arity');
         $assignments = [];
         $parameters = [];
-        $block = new self($arity);
 
         foreach ($node->childNodes as $child) {
             if (!$child instanceof DOMElement) continue;
@@ -75,21 +76,20 @@ class Block extends Node
             switch ($child->nodeName) {
                 case 'parameter':
                     $parameters[] = Parameter::fromXML($child);
-//                    $block->addParameter(Parameter::fromXML($child));
                     break;
                 case 'assign':
                     $assignments[] = Assign::fromXML($child);
-//                    $block->addAssignment(Assign::fromXML($child));
                     break;
             }
         }
 
         return new self($arity, $assignments, $parameters);
-//        return $block;
     }
 
     /**
+     * @throws TypeException
      * @throws ValueException
+     * @throws MessageException
      */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {

@@ -5,6 +5,7 @@ namespace IPP\Student\Classes;
 use DOMElement;
 use IPP\Student\Exceptions\FileStructureException;
 use IPP\Student\Exceptions\MessageException;
+use IPP\Student\Exceptions\TypeException;
 use IPP\Student\Exceptions\ValueException;
 use IPP\Student\RunTime\ObjectFrame;
 use IPP\Student\RunTime\ObjectInstance;
@@ -92,6 +93,7 @@ class Send extends Node
     /**
      * @throws ValueException
      * @throws MessageException
+     * @throws TypeException
      */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
