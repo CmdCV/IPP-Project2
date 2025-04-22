@@ -14,7 +14,7 @@ class Send extends Node
 {
     private string $selector;
     private Expr $expr; // receiver
-    /** @var Arg[] */
+    /** @var array<Arg> */
     private array $arguments;
 
     public function getSelector(): string
@@ -27,32 +27,38 @@ class Send extends Node
         return $this->expr;
     }
 
+    /**
+     * @return array<Arg>
+     */
     public function getArguments(): array
     {
         return $this->arguments;
     }
 
+    /**
+     * @param array<Arg> $arguments
+     */
     public function __construct(string $selector, Expr $expr, array $arguments = [])
     {
         $this->selector = $selector;
         $this->expr = $expr;
-        usort($arguments, fn($a, $b) => $a->getOrder() <=> $b->getOrder());
+        usort($arguments, fn(Arg $a, Arg $b) => $a->getOrder() <=> $b->getOrder());
         $this->arguments = $arguments;
     }
 
     public function prettyPrint(int $indent = 0): string
     {
         $pad = str_repeat('  ', $indent);
-        $out = $pad."Send {\n";
-        $out .= $pad."  selector: $this->selector\n";
-        $out .= $pad."  receiver:\n" . $this->expr->prettyPrint($indent + 2);
+        $out = $pad . "Send {\n";
+        $out .= $pad . "  selector: $this->selector\n";
+        $out .= $pad . "  receiver:\n" . $this->expr->prettyPrint($indent + 2);
         if (!empty($this->arguments)) {
-            $out .= $pad."  arguments:\n";
+            $out .= $pad . "  arguments:\n";
             foreach ($this->arguments as $arg) {
                 $out .= $arg->prettyPrint($indent + 2);
             }
         }
-        $out .= $pad."}\n";
+        $out .= $pad . "}\n";
         return $out;
     }
 
@@ -97,21 +103,17 @@ class Send extends Node
      */
     public function execute(ObjectInstance $self, ObjectFrame $frame): ObjectInstance
     {
-        // 1. Vyhodnotíme příjemce zprávy (např. self, nebo (String read))
         $target = $this->expr->execute($self, $frame);
 
-        // 2. Vyhodnotíme všechny argumenty
         $args = [];
         foreach ($this->arguments as $argExpr) {
             $args[] = $argExpr->execute($self, $frame);
         }
 
-        // 3. Zasíláme zprávu přes sendMessage()
         if (method_exists($target, 'sendMessage')) {
             return $target->sendMessage($this->selector, $args);
         }
 
-        // 4. Chyba – zprávu nelze poslat (např. interní objekt nebo špatný typ)
         throw new MessageException("Cannot send message to target");
     }
 }

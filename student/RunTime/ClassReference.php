@@ -15,6 +15,7 @@ class ClassReference extends ObjectInstance
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      * @throws MessageException
      * @throws TypeException
@@ -27,5 +28,4 @@ class ClassReference extends ObjectInstance
             default => parent::sendMessage($selector, $args),
         };
     }
-
 }

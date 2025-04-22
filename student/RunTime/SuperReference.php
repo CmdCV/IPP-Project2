@@ -7,11 +7,16 @@ use IPP\Student\Exceptions\MessageException;
 class SuperReference extends ObjectInstance
 {
     private ObjectInstance $self;
+
     public function __construct(ObjectInstance $instance) {
         $this->self = $instance;
         parent::__construct($instance->getClass());
     }
 
+    /**
+     * @param array<ObjectInstance> $args
+     * @throws MessageException
+     */
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
         $class = $this->self->getClass()->getParent();

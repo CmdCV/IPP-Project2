@@ -23,6 +23,7 @@ class BlockInstance extends ObjectInstance
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws MessageException
      * @throws ValueException
      * @throws TypeException
@@ -32,7 +33,7 @@ class BlockInstance extends ObjectInstance
         $arity = substr_count($selector, ':');
 
         return match ($selector) {
-            'isNumber','isNil', 'isString' => ObjectFactory::false(),
+            'isNumber', 'isNil', 'isString' => ObjectFactory::false(),
             'isBlock' => ObjectFactory::true(),
             str_repeat('value:', $arity) => (function () use ($arity, $args) {
                 if ($arity !== $this->block->getArity()) {

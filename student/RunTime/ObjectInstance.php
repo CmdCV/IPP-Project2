@@ -10,6 +10,8 @@ use IPP\Student\Exceptions\ValueException;
 class ObjectInstance
 {
     private SolClass $class;
+
+    /** @var array<int|string, ObjectInstance> */
     private array $attributes = [];
 
     public function __construct(SolClass $class)
@@ -32,6 +34,9 @@ class ObjectInstance
         $this->attributes[$name] = $value;
     }
 
+    /**
+     * @return array<int|string, ObjectInstance>
+     */
     public function getAllAttributes(): array
     {
         return $this->attributes;
@@ -58,20 +63,19 @@ class ObjectInstance
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      * @throws MessageException
      * @throws TypeException
      */
     public function sendMessage(string $selector, array $args): ObjectInstance
     {
-        $this->debugLog("→ Sending message '$selector' to instance of class ".$this->class->getName());
-        // Normální metoda
+        $this->debugLog("→ Sending message '$selector' to instance of class " . $this->class->getName());
         $method = $this->class->findMethod($selector);
         if ($method) {
             return $method->invoke($this, $args);
         }
 
-        // Builtin fallback podle dědičnosti
         if ($this->isInstanceOf(ObjectFactory::getClass('Integer'))) {
             return $this->handleIntegerBuiltins($selector, $args);
         }
@@ -96,7 +100,7 @@ class ObjectInstance
      */
     private function handleRead(string $class): ObjectInstance
     {
-        $line="";
+        $line = "";
         switch ($class) {
             case "String":
                 $line = IOContext::$input->readString();
@@ -108,7 +112,7 @@ class ObjectInstance
                 $line = IOContext::$input->readBool();
                 break;
         }
-        if($line !== "") {
+        if ($line !== "") {
             return ObjectFactory::string(rtrim($line, "\n\r"));
         }
 
@@ -116,21 +120,21 @@ class ObjectInstance
     }
 
     /**
-     * @throws TypeException
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      * @throws MessageException
+     * @throws TypeException
      */
     private function handleIntegerBuiltins(string $selector, array $args): ObjectInstance
     {
         $val = $this->attributes['__value'] ?? null;
-        if (!is_int($val)&&!is_null($val)) throw new ValueException("Integer value missing, got: " . gettype($val));
+        if (!is_int($val) && !is_null($val)) throw new ValueException("Integer value missing, got: " . gettype($val));
+        if ($val !== null && !is_int($val)) {
+            throw new ValueException("Expected Integer value");
+        }
 
         $this->debugLog("→ Integer triggered for '$selector' with this = (" . $val . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
 
-        // TODO: timesRepeat:
-        // Jako argument očekává instanci, která rozumí zprávě value:20. Pokud (a jen tehdy, když)
-        // je příjemce n > 0, blok z argumentu se provede n-krát. Bloku resp. argumentu se předá
-        // jako argument číslo iterace (od 1 do n včetně).
         return match ($selector) {
 //            'read' => $this->handleRead("Integer"),
             'divBy:' => $this->requireIntArg($args, 0) === 0 ? throw new ValueException("Division by zero") : ObjectFactory::integer(intdiv($val, $this->requireIntArg($args, 0))),
@@ -160,7 +164,7 @@ class ObjectInstance
                 }
                 return ObjectFactory::nil();
             })(),
-            'isString','isNil', 'isBlock' => ObjectFactory::false(),
+            'isString', 'isNil', 'isBlock' => ObjectFactory::false(),
             'isNumber' => ObjectFactory::true(),
             'whileTrue:' => $this->handleWhileTrue($args[0]),
             default => $this->handleObjectBuiltins($selector, $args),
@@ -192,6 +196,7 @@ class ObjectInstance
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      * @throws TypeException
      * @throws MessageException
@@ -199,7 +204,7 @@ class ObjectInstance
     private function handleStringBuiltins(string $selector, array $args): ObjectInstance
     {
         $val = $this->attributes['__value'] ?? null;
-        if (!is_string($val)&&!is_null($val)) throw new ValueException("String value missing, got: " . $val);
+        if (!is_string($val) && !is_null($val)) throw new ValueException("String value missing, got: " . $val);
 
         $this->debugLog("→ String triggered for '$selector' with this = (" . $val . "), args = [" . implode(', ', array_map(fn($a) => $a->getAttribute('__value') ?? 'undef', $args)) . "]");
 
@@ -214,7 +219,7 @@ class ObjectInstance
             'asInteger' => is_numeric($val) ? ObjectFactory::integer((int)$val) : ObjectFactory::nil(),
             'concatenateWith:' => (function () use ($val, $args) {
                 $arg = $args[0] ?? null;
-                if ($arg?->isInstanceOf(ObjectFactory::getClass('String'))) {
+                if ($arg->isInstanceOf(ObjectFactory::getClass('String'))) {
                     $argVal = $arg->getAttribute('__value') ?? '';
                     return ObjectFactory::string($val . $argVal);
                 }
@@ -231,14 +236,16 @@ class ObjectInstance
                 }
                 return ObjectFactory::string(substr($val, $start - 1, $end - $start));
             })(),
-            'isNumber','isNil', 'isBlock' => ObjectFactory::false(),
+            'isNumber', 'isNil', 'isBlock' => ObjectFactory::false(),
             'isString' => ObjectFactory::true(),
             default => $this->handleObjectBuiltins($selector, $args),
         };
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
+     * @throws TypeException
      * @throws MessageException
      */
     private function handleBooleanBuiltins(string $selector, array $args): ObjectInstance
@@ -252,16 +259,17 @@ class ObjectInstance
             'not' => $isTrue ? ObjectFactory::false() : ObjectFactory::true(),
             'and:' => $isTrue ? $args[0]->sendMessage('value', []) : ObjectFactory::false(),
             'or:' => $isTrue ? ObjectFactory::true() : $args[0]->sendMessage('value', []),
-            'ifTrue:ifFalse:' =>(function () use ($args,$isTrue) {
+            'ifTrue:ifFalse:' => (function () use ($args, $isTrue) {
                 return $isTrue ? $args[0]->sendMessage('value', []) : $args[1]->sendMessage('value', []);
             })(),
             'identicalTo:' => $this->class->getName() === $args[0]->class->getName() ? ObjectFactory::true() : ObjectFactory::false(),
-            'isNumber', 'isString','isNil', 'isBlock' => ObjectFactory::false(),
+            'isNumber', 'isString', 'isNil', 'isBlock' => ObjectFactory::false(),
             default => $this->handleObjectBuiltins($selector, $args),
         };
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      * @throws MessageException
      */
@@ -282,6 +290,7 @@ class ObjectInstance
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      * @throws MessageException
      */
@@ -298,7 +307,7 @@ class ObjectInstance
     }
 
     /**
-     * @throws ValueException
+     * @param array<ObjectInstance> $args
      * @throws MessageException
      */
     private function handleFallbackAccessors(string $selector, array $args): ObjectInstance
@@ -334,11 +343,12 @@ class ObjectInstance
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      */
     private function requireIntArg(array $args, int $i): int
     {
-        $val = $args[$i]?->getAttribute('__value') ?? null;
+        $val = $args[$i]->getAttribute('__value') ?? null;
         if (!is_int($val)) {
             throw new ValueException("Expected Integer argument");
         }
@@ -346,11 +356,12 @@ class ObjectInstance
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws ValueException
      */
     private function requireStringArg(array $args, int $i): string
     {
-        $val = $args[$i]?->getAttribute('__value') ?? null;
+        $val = $args[$i]->getAttribute('__value') ?? null;
         if (!is_string($val)) {
             throw new ValueException("Expected String argument");
         }

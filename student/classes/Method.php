@@ -54,6 +54,7 @@ class Method extends Node
     }
 
     /**
+     * @param array<ObjectInstance> $args
      * @throws MessageException
      * @throws ValueException
      * @throws TypeException

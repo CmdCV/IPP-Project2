@@ -6,9 +6,14 @@ use IPP\Student\Exceptions\TypeException;
 
 class ObjectFrame
 {
-    public function __construct(
-        private array $variables = []
-    ) {}
+    /**
+     * @param array<string, ObjectInstance> $variables
+     */
+    public function __construct(array $variables = []) {
+        $this->variables = $variables;
+    }
+    /** @var array<string, ObjectInstance> */
+    private array $variables;
 
     /**
      * @throws TypeException

@@ -14,11 +14,11 @@ use IPP\Student\RunTime\ObjectInstance;
 class Block extends Node
 {
     private int $arity;
-    /** @var Assign[] */
+    /** @var array<Assign> */
     private array $assignments;
-    /** @var Parameter[] */
+    /** @var array<Parameter> */
     private array $parameters;
-    /** @var Expr[] */
+    /** @var array<Expr> */
     private array $expressions;
 
     public function addParameter(Parameter $parameter): void
@@ -36,27 +36,41 @@ class Block extends Node
         return $this->arity;
     }
 
+    /**
+     * @return array<Assign>
+     */
     public function getAssignments(): array
     {
         return $this->assignments;
     }
 
+    /**
+     * @return array<Parameter>
+     */
     public function getParameters(): array
     {
         return $this->parameters;
     }
 
+    /**
+     * @return array<Expr>
+     */
     public function getExpressions(): array
     {
         return $this->expressions;
     }
 
+    /**
+     * @param array<Assign> $assignments
+     * @param array<Parameter> $parameters
+     * @param array<Expr> $expressions
+     */
     public function __construct(int $arity, array $assignments = [], array $parameters = [], array $expressions = [])
     {
         $this->arity = $arity;
-        usort($assignments, fn($a, $b) => $a->getOrder() <=> $b ->getOrder());
+        usort($assignments, fn(Assign $a, Assign $b) => $a->getOrder() <=> $b->getOrder());
         $this->assignments = $assignments;
-        usort($parameters, fn($a, $b) => $a->getOrder() <=> $b ->getOrder());
+        usort($parameters, fn(Parameter $a, Parameter $b) => $a->getOrder() <=> $b->getOrder());
         $this->parameters = $parameters;
         $this->expressions = $expressions;
     }

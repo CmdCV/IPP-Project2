@@ -16,7 +16,7 @@ class Program extends Node
 {
     private string $language;
     private string $description;
-    /** @var SolClass[] */
+    /** @var array<SolClass> */
     private array $classes;
 
     public function addClass(SolClass $class): void
@@ -34,11 +34,17 @@ class Program extends Node
         return $this->description;
     }
 
+    /**
+     * @return array<SolClass>
+     */
     public function getClasses(): array
     {
         return $this->classes;
     }
 
+    /**
+     * @param array<SolClass> $classes
+     */
     public function __construct(string $language, string $description, array $classes = [])
     {
         $this->language = $language;

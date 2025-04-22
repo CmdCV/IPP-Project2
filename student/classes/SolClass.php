@@ -15,9 +15,12 @@ class SolClass extends Node
     private string $parentName;
     private ?SolClass $parent = null;
 
-    /** @var Method[] */
+    /** @var array<Method> */
     private array $methods;
 
+    /**
+     * @param array<Method> $methods
+     */
     public function __construct(string $name, string $parentName, array $methods = [])
     {
         $this->name = $name;
@@ -42,6 +45,7 @@ class SolClass extends Node
     }
 
     /**
+     * @param array<string, SolClass> $allClasses
      * @throws ValueException
      */
     public function linkParent(array $allClasses): void
@@ -73,6 +77,9 @@ class SolClass extends Node
         return $this->parent;
     }
 
+    /**
+     * @return array<Method>
+     */
     public function getMethods(): array
     {
         return $this->methods;
@@ -101,7 +108,6 @@ class SolClass extends Node
 
         return $instance;
     }
-
 
     /**
      * @throws ValueException
